@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type } from '@google/genai';
 import { Flame, Target, Clock, Share2, Lock, ArrowRight, Loader2, User, Sparkles, Shield, Search, Twitter, Instagram, Youtube, Mail, Menu, Download, Smartphone } from 'lucide-react';
-import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
 import Modal from './components/Modal';
 import Chatbot from './components/Chatbot';
 import AdminDashboard from './components/AdminDashboard';
@@ -98,7 +97,6 @@ export default function App() {
   const [loginForm, setLoginForm] = useState({ name: '', email: '' });
   
   // New State for Tutorial and Feedback
-  const [runTour, setRunTour] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showAppDownload, setShowAppDownload] = useState(false);
   const [showProBenefits, setShowProBenefits] = useState(false);
@@ -115,38 +113,7 @@ export default function App() {
       setUser(parsed);
       setName(parsed.name);
     }
-    
-    // Check if tutorial has been seen
-    if (!localStorage.getItem('has_seen_tour')) {
-      setRunTour(true);
-    }
   }, []);
-
-  const handleJoyrideCallback = (data: CallBackProps) => {
-    const { status } = data;
-    const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
-    
-    if (finishedStatuses.includes(status)) {
-      setRunTour(false);
-      localStorage.setItem('has_seen_tour', 'true');
-    }
-  };
-
-  const tourSteps: Step[] = [
-    {
-      target: '.step-1-form',
-      content: 'Yahan apna naam, dream job, aur social media par kitna time waste karte ho, wo daalo.',
-      disableBeacon: true,
-    },
-    {
-      target: '.step-2-generate',
-      content: 'Generate button par click karo aur apna brutal reality check aur 7-day roadmap pao!',
-    },
-    {
-      target: '.step-3-download',
-      content: 'App ko direct yahan se download karo aur daily track karo!',
-    }
-  ];
 
   const handleFeedbackSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -392,36 +359,6 @@ export default function App() {
 
   return (
     <div className={`min-h-screen bg-[#09090B] text-white font-sans selection:bg-[#39FF14] selection:text-black flex flex-col ${!isAdmin && settings.showAnnouncement && settings.announcementText ? 'pt-24 md:pt-28' : 'pt-16 md:pt-20'}`}>
-      <Joyride
-        steps={tourSteps}
-        run={runTour}
-        continuous={true}
-        showProgress={true}
-        showSkipButton={true}
-        callback={handleJoyrideCallback}
-        styles={{
-          options: {
-            arrowColor: '#18181B',
-            backgroundColor: '#18181B',
-            overlayColor: 'rgba(0, 0, 0, 0.7)',
-            primaryColor: '#39FF14',
-            textColor: '#fff',
-            zIndex: 1000,
-          },
-          buttonNext: {
-            backgroundColor: '#39FF14',
-            color: '#000',
-            fontWeight: 'bold',
-            borderRadius: '8px',
-          },
-          buttonBack: {
-            color: '#fff',
-          },
-          buttonSkip: {
-            color: '#a1a1aa',
-          }
-        }}
-      />
       {/* Header */}
       {!isAdmin && (
         <header className="fixed top-0 left-0 right-0 z-40 bg-[#09090B]/90 backdrop-blur-md border-b border-white/5">
