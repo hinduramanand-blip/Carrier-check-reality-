@@ -101,8 +101,16 @@ export default function App() {
   const [showAppDownload, setShowAppDownload] = useState(false);
   const [showProBenefits, setShowProBenefits] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   const [apiError, setApiError] = useState<string | null>(null);
+
+  useEffect(() => {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    });
+  }, []);
 
   useEffect(() => {
     incrementVisits();
@@ -349,6 +357,19 @@ export default function App() {
       console.error('Error downloading roadmap:', err);
       alert('Failed to download roadmap.');
     }
+  };
+
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    } else {
+      alert("App is already installed, or your browser doesn't support this feature. You can also 'Add to Home Screen' from your browser menu.");
+    }
+    setShowAppDownload(false);
   };
 
   const handleShare = () => {
@@ -842,7 +863,7 @@ export default function App() {
 
                 {/* Branding Footer */}
                 <div className="border-t border-white/10 pt-6 text-center">
-                  <p className="text-yellow-400/80 font-display font-bold tracking-widest uppercase text-sm">Designed by Ramy</p>
+                  <p className="text-yellow-400/80 font-display font-bold tracking-widest uppercase text-sm">Design by student for student</p>
                 </div>
               </div>
               
@@ -948,6 +969,9 @@ export default function App() {
               <p className="text-xs text-zinc-600 font-medium tracking-wide">
                 © 2026 Career Reality Check | All Rights Reserved.
               </p>
+              <p className="text-xs text-[#39FF14] font-medium tracking-wide mt-2">
+                Design by student for student
+              </p>
             </div>
           </div>
         </footer>
@@ -1030,8 +1054,8 @@ export default function App() {
         )}
       </Modal>
 
-      {/* App Download Modal */}
-      <Modal isOpen={showAppDownload} onClose={() => setShowAppDownload(false)} title="Download Career Reality Check App">
+      {/* App Install Modal */}
+      <Modal isOpen={showAppDownload} onClose={() => setShowAppDownload(false)} title="Install Career Reality Check App">
         <div className="space-y-6 text-center">
           <div className="flex justify-center mb-4">
             <div className="w-20 h-20 bg-[#18181B] rounded-2xl border border-white/10 flex items-center justify-center shadow-[0_0_30px_rgba(57,255,20,0.15)]">
@@ -1045,18 +1069,17 @@ export default function App() {
           </p>
 
           <div className="flex flex-col gap-3 mt-6">
-            <a 
-              href="/CareerRealityCheck.apk"
-              download
+            <button 
+              onClick={handleInstallApp}
               className="flex items-center justify-center gap-3 w-full bg-[#39FF14] text-black hover:bg-[#32e612] py-3 px-4 rounded-xl font-bold transition-colors"
             >
               <Download className="w-5 h-5" />
-              <span>Download App (APK)</span>
-            </a>
+              <span>Install App</span>
+            </button>
           </div>
           
           <p className="text-xs text-zinc-500 mt-4">
-            Download the APK directly to your Android device.
+            Install this web app directly to your device's home screen for the best experience.
           </p>
         </div>
       </Modal>
@@ -1223,7 +1246,7 @@ export default function App() {
       {/* Chatbot */}
       {!isAdmin && <Chatbot />}
 
-      {/* Mobile App Download Floating Banner */}
+      {/* Mobile App Install Floating Banner */}
       {!isAdmin && (
         <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#18181B] border-t border-white/10 p-4 pb-safe flex items-center justify-between shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
           <div className="flex items-center gap-3">
@@ -1239,7 +1262,7 @@ export default function App() {
             onClick={() => setShowAppDownload(true)}
             className="bg-[#39FF14] text-black px-4 py-2 rounded-full text-sm font-bold hover:bg-[#32e612] transition-colors"
           >
-            Download
+            Install
           </button>
         </div>
       )}
