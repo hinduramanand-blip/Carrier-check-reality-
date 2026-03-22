@@ -7,7 +7,8 @@ import Chatbot from './components/Chatbot';
 import AdminDashboard from './components/AdminDashboard';
 import { getSettings, incrementVisits, incrementClicks, addFeedback, incrementRoasts, incrementProUnlocks } from './lib/store';
 import { jobList, jobCategories } from './lib/jobs';
-import html2canvas from 'html2canvas';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
 
 const generateWithRetry = async (modelName: string, contents: string, config: any, maxRetries = 3) => {
   let attempt = 0;
@@ -381,16 +382,34 @@ export default function App() {
   const handleDownloadRoadmap = async () => {
     const element = document.getElementById('pro-roadmap-card');
     if (!element) return;
+    
+    const scrollableDiv = element.querySelector('.overflow-y-auto');
+    if (scrollableDiv) {
+      scrollableDiv.classList.remove('max-h-[500px]', 'overflow-y-auto');
+    }
+
+    // Hide download buttons during PDF generation
+    const downloadBtns = element.querySelectorAll('button');
+    downloadBtns.forEach(btn => btn.style.display = 'none');
+
     try {
-      const canvas = await html2canvas(element, { backgroundColor: '#09090B' });
-      const data = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.href = data;
-      link.download = 'My_Pro_Roadmap.png';
-      link.click();
+      const opt = {
+        margin:       0.2,
+        filename:     'My_Pro_Roadmap.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#09090B' },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+      };
+      
+      await html2pdf().set(opt).from(element).save();
     } catch (err) {
       console.error('Error downloading roadmap:', err);
-      alert('Failed to download roadmap.');
+      alert('Failed to download roadmap. Please try again.');
+    } finally {
+      if (scrollableDiv) {
+        scrollableDiv.classList.add('max-h-[500px]', 'overflow-y-auto');
+      }
+      downloadBtns.forEach(btn => btn.style.display = '');
     }
   };
 
@@ -520,7 +539,7 @@ export default function App() {
       {isAdmin ? (
         <AdminDashboard onLogout={() => setIsAdmin(false)} />
       ) : (
-        <main className="flex-1 max-w-3xl w-full mx-auto px-6 py-12 md:py-20">
+        <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-12 md:py-20">
         
         {/* Header */}
         <motion.div 
@@ -742,7 +761,7 @@ export default function App() {
                 {!isProUnlocked ? (
                   <div className="flex flex-col items-center gap-4">
                     <a 
-                      href="https://razorpay.me/@carriercheckreality"
+                      href={settings.razorpayLink.startsWith('http') ? settings.razorpayLink : `https://${settings.razorpayLink}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => setShowPaymentVerification(true)}
@@ -839,7 +858,7 @@ export default function App() {
                     onClick={handleDownloadRoadmap}
                     className="hidden md:flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition-colors text-sm font-bold bg-yellow-400/10 px-4 py-2 rounded-lg"
                   >
-                    <Download className="w-4 h-4" /> Download PDF/Image
+                    <Download className="w-4 h-4" /> Download PDF
                   </button>
                 </div>
                 
@@ -906,7 +925,7 @@ export default function App() {
 
                 {/* Branding Footer */}
                 <div className="border-t border-white/10 pt-6 text-center">
-                  <p className="text-yellow-400/80 font-display font-bold tracking-widest uppercase text-sm">Design by student</p>
+                  <p className="text-yellow-400/80 font-display font-bold tracking-widest uppercase text-sm">Design by Ramy</p>
                 </div>
               </div>
               
@@ -961,7 +980,7 @@ export default function App() {
 
       {/* Custom Modules */}
       {!isAdmin && settings.customModules && settings.customModules.length > 0 && (
-        <div className="w-full max-w-3xl mx-auto mt-12 px-6 space-y-8">
+        <div className="w-full max-w-4xl mx-auto mt-12 px-6 space-y-8">
           {settings.customModules.map((module) => (
             <div key={module.id} className="bg-[#18181B] rounded-3xl p-6 md:p-8 border border-white/5 shadow-2xl">
               <h2 className="text-2xl font-display font-bold text-[#39FF14] mb-4">{module.title}</h2>
@@ -1013,7 +1032,7 @@ export default function App() {
                 © 2026 Career Reality Check | All Rights Reserved.
               </p>
               <p className="text-xs text-[#39FF14] font-medium tracking-wide mt-2">
-                Design by student
+                Design by Ramy
               </p>
             </div>
           </div>
