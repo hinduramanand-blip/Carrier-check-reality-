@@ -2,7 +2,7 @@ export const getSettings = () => {
   const defaultSettings = { 
     price: 9, 
     roastMode: 'Savage', 
-    razorpayLink: 'https://razorpay.me/@carriercheckreality',
+    razorpayLink: 'https://rzp.io/rzp/gqpD5igp',
     adSenseId: '',
     customAdImageUrl: '',
     customAdLink: '',
