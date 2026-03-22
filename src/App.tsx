@@ -100,12 +100,27 @@ export default function App() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [showAppDownload, setShowAppDownload] = useState(false);
   const [showProBenefits, setShowProBenefits] = useState(false);
+  const [showPaymentVerification, setShowPaymentVerification] = useState(false);
+  const [transactionId, setTransactionId] = useState('');
   const [feedbackText, setFeedbackText] = useState('');
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Check if app is running in standalone mode (installed PWA)
+    const checkStandalone = () => {
+      if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+        setIsStandalone(true);
+      } else {
+        setIsStandalone(false);
+      }
+    };
+    
+    checkStandalone();
+    window.matchMedia('(display-mode: standalone)').addEventListener('change', checkStandalone);
+
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -321,15 +336,35 @@ export default function App() {
     }
   };
 
-  const handleUnlockPro = () => {
+  const handleInitiatePayment = () => {
     if (settings.razorpayLink) {
-      window.open(settings.razorpayLink, '_blank');
+      let url = settings.razorpayLink;
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+      }
+      window.open(url, '_blank');
+      setShowProBenefits(false);
+      setShowPaymentVerification(true);
     } else {
       alert('Payment link not configured by admin. Unlocking for demo purposes.');
+      incrementProUnlocks();
+      setIsProUnlocked(true);
+      handleGeneratePro();
+      setShowProBenefits(false);
     }
-    incrementProUnlocks();
-    setIsProUnlocked(true);
-    handleGeneratePro();
+  };
+
+  const handleVerifyPayment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (transactionId.trim().length > 5) {
+      setShowPaymentVerification(false);
+      incrementProUnlocks();
+      setIsProUnlocked(true);
+      handleGeneratePro();
+      setTransactionId('');
+    } else {
+      alert('Please enter a valid Transaction ID after completing the payment.');
+    }
   };
 
   const handleAdminBypass = () => {
@@ -435,13 +470,15 @@ export default function App() {
             </div>
 
             {/* Download App Button */}
-            <button 
-              onClick={() => setShowAppDownload(true)}
-              className="step-3-download hidden md:flex items-center gap-2 bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/30 hover:bg-[#39FF14]/20 px-4 py-2 rounded-full text-sm font-bold transition-all"
-            >
-              <Smartphone className="w-4 h-4" />
-              <span>Get App</span>
-            </button>
+            {!isStandalone && (
+              <button 
+                onClick={() => setShowAppDownload(true)}
+                className="step-3-download hidden md:flex items-center gap-2 bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/30 hover:bg-[#39FF14]/20 px-4 py-2 rounded-full text-sm font-bold transition-all"
+              >
+                <Smartphone className="w-4 h-4" />
+                <span>Get App</span>
+              </button>
+            )}
           </div>
 
           {/* Mobile Menu Dropdown */}
@@ -464,13 +501,15 @@ export default function App() {
                   ) : (
                     <button onClick={() => { setShowLogin(true); setIsMobileMenuOpen(false); }} className="text-left text-zinc-400 hover:text-white transition-colors">Login</button>
                   )}
-                  <button 
-                    onClick={() => { setShowAppDownload(true); setIsMobileMenuOpen(false); }}
-                    className="flex items-center gap-2 bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/30 hover:bg-[#39FF14]/20 px-4 py-2 rounded-lg text-sm font-bold transition-all w-full justify-center mt-2"
-                  >
-                    <Smartphone className="w-4 h-4" />
-                    <span>Get App</span>
-                  </button>
+                  {!isStandalone && (
+                    <button 
+                      onClick={() => { setShowAppDownload(true); setIsMobileMenuOpen(false); }}
+                      className="flex items-center gap-2 bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/30 hover:bg-[#39FF14]/20 px-4 py-2 rounded-lg text-sm font-bold transition-all w-full justify-center mt-2"
+                    >
+                      <Smartphone className="w-4 h-4" />
+                      <span>Get App</span>
+                    </button>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -1126,15 +1165,50 @@ export default function App() {
           </div>
 
           <button 
-            onClick={() => {
-              setShowProBenefits(false);
-              handleUnlockPro();
-            }}
+            onClick={handleInitiatePayment}
             className="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2 text-lg"
           >
             Pay ₹{settings.price} & Unlock Now <ArrowRight className="w-5 h-5" />
           </button>
         </div>
+      </Modal>
+
+      {/* Payment Verification Modal */}
+      <Modal isOpen={showPaymentVerification} onClose={() => setShowPaymentVerification(false)} title="Verify Payment">
+        <form onSubmit={handleVerifyPayment} className="space-y-6 text-center">
+          <div className="flex justify-center mb-4">
+            <div className="w-20 h-20 bg-[#18181B] rounded-2xl border border-white/10 flex items-center justify-center shadow-[0_0_30px_rgba(250,204,21,0.15)]">
+              <Shield className="w-10 h-10 text-yellow-400" />
+            </div>
+          </div>
+          
+          <h3 className="text-xl font-display font-bold text-white">
+            Payment Initiated
+          </h3>
+          
+          <p className="text-sm text-zinc-400">
+            Please complete your payment of <strong className="text-yellow-400">₹{settings.price}</strong> on the Razorpay page that opened. Once done, enter the Transaction ID below to unlock your Pro Roadmap.
+          </p>
+
+          <div className="text-left">
+            <label className="block text-sm font-medium text-zinc-400 mb-2">Transaction ID / Reference No.</label>
+            <input 
+              type="text" 
+              required
+              value={transactionId}
+              onChange={(e) => setTransactionId(e.target.value)}
+              placeholder="e.g. pay_P1234567890"
+              className="w-full bg-[#18181B] border border-white/10 rounded-xl py-3 px-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 transition-all"
+            />
+          </div>
+
+          <button 
+            type="submit"
+            className="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2 text-lg"
+          >
+            Verify & Unlock <Sparkles className="w-5 h-5" />
+          </button>
+        </form>
       </Modal>
 
       {/* Feedback Modal */}
@@ -1247,7 +1321,7 @@ export default function App() {
       {!isAdmin && <Chatbot />}
 
       {/* Mobile App Install Floating Banner */}
-      {!isAdmin && (
+      {!isAdmin && !isStandalone && (
         <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#18181B] border-t border-white/10 p-4 pb-safe flex items-center justify-between shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-[#09090B] rounded-xl border border-white/10 flex items-center justify-center">
