@@ -742,11 +742,12 @@ export default function App() {
                 {!isProUnlocked ? (
                   <div className="flex flex-col items-center gap-4">
                     <a 
-                      href="https://rzp.io/rzp/gqpD5igp"
+                      href="https://razorpay.me/@carriercheckreality"
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => setShowPaymentVerification(true)}
-                      className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-black font-bold px-8 py-4 rounded-xl hover:bg-yellow-500 transition-colors w-full md:w-auto relative z-[9999]"
+                      style={{ zIndex: 9999, position: 'relative', pointerEvents: 'auto', cursor: 'pointer' }}
+                      className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-black font-bold px-8 py-4 rounded-xl hover:bg-yellow-500 transition-colors w-full md:w-auto"
                     >
                       Unlock Pro Version <ArrowRight className="w-5 h-5" />
                     </a>
