@@ -8,7 +8,7 @@ import AdminDashboard from './components/AdminDashboard';
 import { getSettings, incrementVisits, incrementClicks, addFeedback, incrementRoasts, incrementProUnlocks } from './lib/store';
 import { jobList, jobCategories } from './lib/jobs';
 import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 
 const generateWithRetry = async (modelName: string, contents: string, config: any, maxRetries = 3) => {
   let attempt = 0;
@@ -391,8 +391,11 @@ export default function App() {
 
     const brandingText = element.querySelector('#pdf-branding-text');
     if (brandingText) {
-      brandingText.textContent = 'Design by Ramy';
+      brandingText.textContent = 'DESIGN BY RAMY';
     }
+
+    // Wait for DOM to update
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
       const canvas = await html2canvas(element, { 
@@ -415,7 +418,7 @@ export default function App() {
       pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
       heightLeft -= pageHeight;
 
-      while (heightLeft >= 0) {
+      while (heightLeft > 0) {
         position = heightLeft - pdfHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
@@ -432,7 +435,7 @@ export default function App() {
       }
       downloadBtns.forEach(btn => btn.style.display = '');
       if (brandingText) {
-        brandingText.textContent = 'Design by student';
+        brandingText.textContent = 'DESIGN BY STUDENT';
       }
     }
   };
@@ -967,7 +970,7 @@ export default function App() {
 
                 {/* Branding Footer */}
                 <div className="border-t border-white/10 pt-6 text-center">
-                  <p id="pdf-branding-text" className="text-yellow-400/80 font-display font-bold tracking-widest uppercase text-sm">Design by student</p>
+                  <p id="pdf-branding-text" className="text-yellow-400/80 font-display font-bold tracking-widest uppercase text-sm">DESIGN BY STUDENT</p>
                 </div>
               </div>
               
@@ -1073,7 +1076,7 @@ export default function App() {
               <p className="text-xs text-zinc-600 font-medium tracking-wide">
                 © 2026 Career Reality Check | All Rights Reserved.
               </p>
-              <p className="text-xs text-[#39FF14] font-medium tracking-wide mt-2">
+              <p className="text-xs text-[#39FF14] font-medium tracking-wide mt-2 uppercase">
                 Design by student
               </p>
             </div>
