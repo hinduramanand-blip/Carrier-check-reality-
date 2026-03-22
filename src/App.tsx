@@ -8,6 +8,7 @@ import AdminDashboard from './components/AdminDashboard';
 import { getSettings, incrementVisits, incrementClicks, addFeedback, incrementRoasts, incrementProUnlocks } from './lib/store';
 import { jobList, jobCategories } from './lib/jobs';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const generateWithRetry = async (modelName: string, contents: string, config: any, maxRetries = 3) => {
   let attempt = 0;
@@ -38,6 +39,8 @@ interface RoadmapDay {
   day: number;
   task: string;
   book?: string;
+  timeCommitment?: string;
+  tool?: string;
 }
 
 interface FreeResultData {
@@ -276,6 +279,7 @@ export default function App() {
            - Phase 3: Mastery (Day 21-30) - Scaling tips & Elite Book list.
            *MANDATORY VIRAL FEATURE*: On Days 5, 10, 15, 20, 25, and 30, append this exact message to the task string: "🚀 Progress is better together! Share this with a friend to grow as a team!"
            *MANDATORY BOOK FEATURE*: For EVERY SINGLE DAY (Day 1 to 30), provide ONE highly relevant book recommendation ('book' field) related to their specific goal/field. So they get 30 books in 30 days.
+           *MANDATORY TIME & TOOL*: For each day, provide a realistic 'timeCommitment' (e.g., '45 mins', '1.5 hours') and a specific 'tool' to use (e.g., 'Notion', 'LinkedIn', 'Figma', 'ChatGPT').
         3. resources: A curated "Master Reading List" (Top 3 books). For each book, provide the 'title' (just the book name) and 'description' (a short summary in Hinglish).
         4. habitTracker: Specific "Power Habits" that clear mental fog and increase focus 10x (3-4 habits) in Hinglish.
         5. expertAdvice: Provide elite advice in Hinglish and end with these exact 'Save & Download Instructions' (in English):
@@ -299,8 +303,10 @@ export default function App() {
                     day: { type: Type.INTEGER },
                     task: { type: Type.STRING },
                     book: { type: Type.STRING, description: "A highly relevant book recommendation for this specific day" },
+                    timeCommitment: { type: Type.STRING, description: "Time required, e.g., '45 mins'" },
+                    tool: { type: Type.STRING, description: "Specific tool to use, e.g., 'Notion', 'LinkedIn'" }
                   },
-                  required: ['day', 'task', 'book'],
+                  required: ['day', 'task', 'book', 'timeCommitment', 'tool'],
                 },
               },
               resources: {
@@ -340,10 +346,7 @@ export default function App() {
   };
 
   const handleInitiatePayment = () => {
-    let url = settings.razorpayLink || "https://razorpay.me/@carriercheckreality9";
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://' + url;
-    }
+    const url = "https://razorpay.me/@carriercheckreality9";
     window.open(url, '_blank');
     setShowProBenefits(false);
     setShowPaymentVerification(true);
@@ -382,22 +385,44 @@ export default function App() {
       scrollableDiv.classList.remove('max-h-[500px]', 'overflow-y-auto');
     }
 
-    // Hide download buttons during PNG generation
+    // Hide download buttons during PDF generation
     const downloadBtns = element.querySelectorAll('button');
     downloadBtns.forEach(btn => btn.style.display = 'none');
+
+    const brandingText = element.querySelector('#pdf-branding-text');
+    if (brandingText) {
+      brandingText.textContent = 'Design by Ramy';
+    }
 
     try {
       const canvas = await html2canvas(element, { 
         backgroundColor: '#09090B',
         scale: 2,
-        useCORS: true
+        useCORS: true,
+        logging: false,
+        allowTaint: true
       });
       
-      const data = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.href = data;
-      link.download = 'My_Pro_Roadmap.png';
-      link.click();
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      let heightLeft = pdfHeight;
+      let position = 0;
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - pdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      pdf.save('My_Pro_Roadmap.pdf');
     } catch (err) {
       console.error('Error downloading roadmap:', err);
       alert('Failed to download roadmap. Please try again.');
@@ -406,6 +431,9 @@ export default function App() {
         scrollableDiv.classList.add('max-h-[500px]', 'overflow-y-auto');
       }
       downloadBtns.forEach(btn => btn.style.display = '');
+      if (brandingText) {
+        brandingText.textContent = 'Design by student';
+      }
     }
   };
 
@@ -757,7 +785,7 @@ export default function App() {
                 {!isProUnlocked ? (
                   <div className="flex flex-col items-center gap-4">
                     <a 
-                      href={settings.razorpayLink ? (settings.razorpayLink.startsWith('http') ? settings.razorpayLink : `https://${settings.razorpayLink}`) : "https://razorpay.me/@carriercheckreality9"}
+                      href="https://razorpay.me/@carriercheckreality9"
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => setShowPaymentVerification(true)}
@@ -854,7 +882,7 @@ export default function App() {
                     onClick={handleDownloadRoadmap}
                     className="hidden md:flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition-colors text-sm font-bold bg-yellow-400/10 px-4 py-2 rounded-lg"
                   >
-                    <Download className="w-4 h-4" /> Download Image
+                    <Download className="w-4 h-4" /> Download PDF
                   </button>
                 </div>
                 
@@ -864,14 +892,26 @@ export default function App() {
                       <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[#18181B] border border-white/10 flex items-center justify-center font-display font-bold text-yellow-400 group-hover:scale-110 transition-transform">
                         D{day.day}
                       </div>
-                      <div className="flex flex-col justify-center">
-                        <p className="text-zinc-300 text-sm md:text-base mb-2">{day.task}</p>
-                        {day.book && (
-                          <div className="flex items-center gap-2 text-xs text-yellow-400/80 bg-yellow-400/10 w-fit px-3 py-1 rounded-full">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-                            <span>Book of the Day: {day.book}</span>
-                          </div>
-                        )}
+                      <div className="flex flex-col justify-center w-full">
+                        <p className="text-zinc-300 text-sm md:text-base mb-3">{day.task}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {day.timeCommitment && (
+                            <div className="flex items-center gap-1 text-[10px] md:text-xs text-blue-400 bg-blue-400/10 px-2 py-1 rounded-md">
+                              <Clock className="w-3 h-3" /> {day.timeCommitment}
+                            </div>
+                          )}
+                          {day.tool && (
+                            <div className="flex items-center gap-1 text-[10px] md:text-xs text-purple-400 bg-purple-400/10 px-2 py-1 rounded-md">
+                              <Target className="w-3 h-3" /> Tool: {day.tool}
+                            </div>
+                          )}
+                          {day.book && (
+                            <div className="flex items-center gap-1 text-[10px] md:text-xs text-yellow-400/80 bg-yellow-400/10 px-2 py-1 rounded-md">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                              Book: {day.book}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -927,7 +967,7 @@ export default function App() {
 
                 {/* Branding Footer */}
                 <div className="border-t border-white/10 pt-6 text-center">
-                  <p className="text-yellow-400/80 font-display font-bold tracking-widest uppercase text-sm">Design by Ramy</p>
+                  <p id="pdf-branding-text" className="text-yellow-400/80 font-display font-bold tracking-widest uppercase text-sm">Design by student</p>
                 </div>
               </div>
               
@@ -1034,7 +1074,7 @@ export default function App() {
                 © 2026 Career Reality Check | All Rights Reserved.
               </p>
               <p className="text-xs text-[#39FF14] font-medium tracking-wide mt-2">
-                Design by Ramy
+                Design by student
               </p>
             </div>
           </div>
@@ -1189,27 +1229,18 @@ export default function App() {
             </div>
           </div>
 
-          {settings.razorpayLink || "https://razorpay.me/@carriercheckreality9" ? (
-            <a 
-              href={settings.razorpayLink ? (settings.razorpayLink.startsWith('http') ? settings.razorpayLink : `https://${settings.razorpayLink}`) : "https://razorpay.me/@carriercheckreality9"}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => {
-                setShowProBenefits(false);
-                setShowPaymentVerification(true);
-              }}
-              className="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2 text-lg"
-            >
-              Pay ₹{settings.price} & Unlock Now <ArrowRight className="w-5 h-5" />
-            </a>
-          ) : (
-            <button 
-              onClick={handleInitiatePayment}
-              className="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2 text-lg"
-            >
-              Pay ₹{settings.price} & Unlock Now <ArrowRight className="w-5 h-5" />
-            </button>
-          )}
+          <a 
+            href="https://razorpay.me/@carriercheckreality9"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => {
+              setShowProBenefits(false);
+              setShowPaymentVerification(true);
+            }}
+            className="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2 text-lg"
+          >
+            Pay ₹{settings.price} & Unlock Now <ArrowRight className="w-5 h-5" />
+          </a>
         </div>
       </Modal>
 
