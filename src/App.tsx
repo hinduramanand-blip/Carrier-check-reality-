@@ -956,18 +956,18 @@ export default function App() {
                   <div className="flex flex-col items-center gap-4 w-full max-w-md mx-auto">
                     <div className="flex flex-col gap-3 w-full">
                       <button 
-                        onClick={handleInitiatePayment}
+                        onClick={() => setShowProBenefits(true)}
                         style={{ zIndex: 9999, position: 'relative', pointerEvents: 'auto', cursor: 'pointer' }}
                         className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-black font-bold px-8 py-4 rounded-xl hover:bg-yellow-500 transition-colors w-full"
                       >
-                        Step 1: Pay ₹{settings.price} <ArrowRight className="w-5 h-5" />
+                        View Pro Benefits & Unlock <ArrowRight className="w-5 h-5" />
                       </button>
                       <button 
                         onClick={() => setShowPaymentVerification(true)}
                         style={{ zIndex: 9999, position: 'relative', pointerEvents: 'auto', cursor: 'pointer' }}
                         className="inline-flex items-center justify-center gap-2 bg-[#18181B] border border-yellow-400/50 text-yellow-400 font-bold px-8 py-4 rounded-xl hover:bg-yellow-400/10 transition-colors w-full"
                       >
-                        Step 2: Verify Payment <Shield className="w-5 h-5" />
+                        Already Paid? Verify Here <Shield className="w-5 h-5" />
                       </button>
                     </div>
                     
@@ -1443,7 +1443,7 @@ export default function App() {
             <div className="flex items-start gap-3">
               <div className="p-2 bg-yellow-400/10 rounded-lg shrink-0"><Target className="w-5 h-5 text-yellow-400"/></div>
               <div>
-                <p className="font-bold text-white">30-Day Action Plan</p>
+                <p className="font-bold text-white">1. 30-Day Action Plan</p>
                 <p className="text-xs text-zinc-400">Day-by-day tasks aur strategy aapke specific goal ke liye.</p>
               </div>
             </div>
@@ -1451,7 +1451,7 @@ export default function App() {
             <div className="flex items-start gap-3">
               <div className="p-2 bg-[#04D9FF]/10 rounded-lg shrink-0"><Sparkles className="w-5 h-5 text-[#04D9FF]"/></div>
               <div>
-                <p className="font-bold text-white">Master Reading List</p>
+                <p className="font-bold text-white">2. Master Reading List</p>
                 <p className="text-xs text-zinc-400">Top 3 books ki summary jo aapki mindset ko transform karegi.</p>
               </div>
             </div>
@@ -1459,7 +1459,7 @@ export default function App() {
             <div className="flex items-start gap-3">
               <div className="p-2 bg-[#FF10F0]/10 rounded-lg shrink-0"><Flame className="w-5 h-5 text-[#FF10F0]"/></div>
               <div>
-                <p className="font-bold text-white">10x Focus Power Habits</p>
+                <p className="font-bold text-white">3. 10x Focus Power Habits</p>
                 <p className="text-xs text-zinc-400">Aise habits jo aapka distraction khatam karke focus badhayenge.</p>
               </div>
             </div>
@@ -1467,8 +1467,16 @@ export default function App() {
             <div className="flex items-start gap-3">
               <div className="p-2 bg-[#39FF14]/10 rounded-lg shrink-0"><Download className="w-5 h-5 text-[#39FF14]"/></div>
               <div>
-                <p className="font-bold text-white">Downloadable PDF</p>
-                <p className="text-xs text-zinc-400">Apne roadmap ko save karein aur kabhi bhi access karein.</p>
+                <p className="font-bold text-white">4. High-Quality PDF Download</p>
+                <p className="text-xs text-zinc-400">Apne roadmap ko HD PDF mein save karein aur kabhi bhi access karein.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-purple-400/10 rounded-lg shrink-0"><Shield className="w-5 h-5 text-purple-400"/></div>
+              <div>
+                <p className="font-bold text-white">5. Expert Career Advice</p>
+                <p className="text-xs text-zinc-400">Industry experts ki taraf se personalized tips aur guidance.</p>
               </div>
             </div>
           </div>
@@ -1478,7 +1486,7 @@ export default function App() {
               onClick={handleInitiatePayment}
               className="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2 text-lg"
             >
-              Step 1: Pay ₹{settings.price} <ArrowRight className="w-5 h-5" />
+              Pay ₹{settings.price} to Unlock <ArrowRight className="w-5 h-5" />
             </button>
             <button 
               onClick={() => {
@@ -1487,7 +1495,7 @@ export default function App() {
               }}
               className="w-full bg-[#18181B] border border-yellow-400/50 text-yellow-400 font-bold py-4 rounded-xl hover:bg-yellow-400/10 transition-colors flex items-center justify-center gap-2 text-lg"
             >
-              Step 2: Verify Payment <Shield className="w-5 h-5" />
+              Already Paid? Verify Here <Shield className="w-5 h-5" />
             </button>
           </div>
         </div>
