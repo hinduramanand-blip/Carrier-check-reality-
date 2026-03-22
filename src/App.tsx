@@ -902,7 +902,7 @@ export default function App() {
 
                 {/* Branding Footer */}
                 <div className="border-t border-white/10 pt-6 text-center">
-                  <p className="text-yellow-400/80 font-display font-bold tracking-widest uppercase text-sm">Design by student for student</p>
+                  <p className="text-yellow-400/80 font-display font-bold tracking-widest uppercase text-sm">Design by student</p>
                 </div>
               </div>
               
@@ -1009,7 +1009,7 @@ export default function App() {
                 © 2026 Career Reality Check | All Rights Reserved.
               </p>
               <p className="text-xs text-[#39FF14] font-medium tracking-wide mt-2">
-                Design by student for student
+                Design by student
               </p>
             </div>
           </div>
@@ -1164,12 +1164,27 @@ export default function App() {
             </div>
           </div>
 
-          <button 
-            onClick={handleInitiatePayment}
-            className="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2 text-lg"
-          >
-            Pay ₹{settings.price} & Unlock Now <ArrowRight className="w-5 h-5" />
-          </button>
+          {settings.razorpayLink ? (
+            <a 
+              href={settings.razorpayLink.startsWith('http') ? settings.razorpayLink : `https://${settings.razorpayLink}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                setShowProBenefits(false);
+                setShowPaymentVerification(true);
+              }}
+              className="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2 text-lg"
+            >
+              Pay ₹{settings.price} & Unlock Now <ArrowRight className="w-5 h-5" />
+            </a>
+          ) : (
+            <button 
+              onClick={handleInitiatePayment}
+              className="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2 text-lg"
+            >
+              Pay ₹{settings.price} & Unlock Now <ArrowRight className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </Modal>
 

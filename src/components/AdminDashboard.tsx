@@ -48,6 +48,11 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   }, []);
 
   const handleSave = () => {
+    if (razorpayLink && !razorpayLink.includes('rzp.io') && !razorpayLink.includes('razorpay.com') && !razorpayLink.includes('razorpay.me')) {
+      alert('Please enter a valid Razorpay link (usually contains rzp.io, razorpay.me, or razorpay.com). Do not enter your website link here.');
+      return;
+    }
+
     saveSettings({ 
       price, 
       roastMode, 
@@ -165,7 +170,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 type="url" 
                 value={razorpayLink}
                 onChange={(e) => setRazorpayLink(e.target.value)}
-                placeholder="https://rzp.io/l/..."
+                placeholder="https://razorpay.me/@..."
                 className="w-full bg-[#09090B] border border-white/10 rounded-xl py-3 px-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#39FF14] focus:ring-1 focus:ring-[#39FF14] transition-all"
               />
             </div>
