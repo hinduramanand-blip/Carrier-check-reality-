@@ -16,3 +16,26 @@ body {
   background-color: var(--color-dark-bg);
   color: #ffffff;
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #pro-roadmap-card, #pro-roadmap-card * {
+    visibility: visible;
+  }
+  #pro-roadmap-card {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .custom-scrollbar {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}

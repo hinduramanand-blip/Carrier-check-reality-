@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type } from '@google/genai';
-import { Flame, Target, Clock, Share2, Lock, ArrowRight, Loader2, User, Sparkles, Shield, Search, Twitter, Instagram, Youtube, Mail, Menu, Download, Smartphone } from 'lucide-react';
+import { Flame, Target, Clock, Share2, Lock, ArrowRight, Loader2, User, Sparkles, Shield, Search, Twitter, Instagram, Youtube, Mail, Menu, Download, Smartphone, Printer, AlertTriangle, CheckSquare } from 'lucide-react';
 import Modal from './components/Modal';
 import Chatbot from './components/Chatbot';
 import AdminDashboard from './components/AdminDashboard';
 import { getSettings, incrementVisits, incrementClicks, addFeedback, incrementRoasts, incrementProUnlocks } from './lib/store';
 import { jobList, jobCategories } from './lib/jobs';
-import html2canvas from 'html2canvas';
+import { toJpeg } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 
 const generateWithRetry = async (modelName: string, contents: string, config: any, maxRetries = 3) => {
@@ -106,11 +106,57 @@ export default function App() {
   const [showProBenefits, setShowProBenefits] = useState(false);
   const [showPaymentVerification, setShowPaymentVerification] = useState(false);
   const [transactionId, setTransactionId] = useState('');
+  const [amountConfirmed, setAmountConfirmed] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isStandalone, setIsStandalone] = useState(false);
 
   const [apiError, setApiError] = useState<string | null>(null);
+
+  // Load state on mount
+  useEffect(() => {
+    const savedResult = localStorage.getItem('careerResult');
+    const savedProStatus = localStorage.getItem('isProUnlocked');
+    
+    if (savedResult) {
+      try {
+        setResult(JSON.parse(savedResult));
+      } catch (e) {
+        console.error('Failed to parse saved result', e);
+      }
+    }
+    
+    if (savedProStatus === 'true') {
+      setIsProUnlocked(true);
+    }
+  }, []);
+
+  // Save state on change
+  useEffect(() => {
+    if (result) {
+      localStorage.setItem('careerResult', JSON.stringify(result));
+    } else {
+      localStorage.removeItem('careerResult');
+    }
+  }, [result]);
+
+  useEffect(() => {
+    localStorage.setItem('isProUnlocked', isProUnlocked.toString());
+  }, [isProUnlocked]);
+
+  const handleInitiatePayment = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const url = `https://razorpay.me/@carriercheckreality9?amount=${settings.price}`;
+    
+    // Try to open in new tab
+    const newWin = window.open(url, '_blank');
+    
+    // If blocked or failed (often happens in in-app browsers like Instagram/Facebook), fallback to same tab
+    if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
+      window.location.href = url;
+    }
+  };
 
   useEffect(() => {
     // Check if app is running in standalone mode (installed PWA)
@@ -345,21 +391,25 @@ export default function App() {
     }
   };
 
-  const handleInitiatePayment = () => {
-    const url = "https://razorpay.me/@carriercheckreality9";
-    window.open(url, '_blank');
-    setShowProBenefits(false);
-    setShowPaymentVerification(true);
-  };
 
-  const handleVerifyPayment = (e: React.FormEvent) => {
+
+  const handleVerifyPayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!amountConfirmed) {
+      alert(`Please confirm that you have paid exactly ₹${settings.price} to proceed.`);
+      return;
+    }
     if (transactionId.trim().length > 5) {
+      setIsVerifying(true);
+      // Simulate verification delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setIsVerifying(false);
       setShowPaymentVerification(false);
       incrementProUnlocks();
       setIsProUnlocked(true);
       handleGeneratePro();
       setTransactionId('');
+      setAmountConfirmed(false);
     } else {
       alert('Please enter a valid Transaction ID after completing the payment.');
     }
@@ -394,37 +444,38 @@ export default function App() {
       brandingText.textContent = 'DESIGN BY RAMY';
     }
 
-    // Wait for DOM to update
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Wait for DOM to update and repaint before capturing
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     try {
-      const canvas = await html2canvas(element, { 
+      // Use html-to-image to avoid oklch parsing errors from html2canvas
+      const dataUrl = await toJpeg(element, {
+        quality: 0.95,
         backgroundColor: '#09090B',
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        allowTaint: true
+        pixelRatio: 2
       });
-      
-      const imgData = canvas.toDataURL('image/png');
+
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      let heightLeft = pdfHeight;
-      let position = 0;
-      const pageHeight = pdf.internal.pageSize.getHeight();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pageHeight;
+      // Calculate image dimensions to fit width
+      const imgProps = pdf.getImageProperties(dataUrl);
+      const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(dataUrl, 'JPEG', 0, position, pdfWidth, imgHeight);
+      heightLeft -= pdfHeight;
 
       while (heightLeft > 0) {
-        position = heightLeft - pdfHeight;
+        position -= pdfHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pageHeight;
+        pdf.addImage(dataUrl, 'JPEG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pdfHeight;
       }
-      
+
       pdf.save('My_Pro_Roadmap.pdf');
     } catch (err) {
       console.error('Error downloading roadmap:', err);
@@ -437,6 +488,35 @@ export default function App() {
       if (brandingText) {
         brandingText.textContent = 'DESIGN BY STUDENT';
       }
+    }
+  };
+
+  const handlePrintRoadmap = () => {
+    const element = document.getElementById('pro-roadmap-card');
+    if (!element) return;
+    
+    const scrollableDiv = element.querySelector('.overflow-y-auto');
+    if (scrollableDiv) {
+      scrollableDiv.classList.remove('max-h-[500px]', 'overflow-y-auto');
+    }
+
+    const brandingText = element.querySelector('#pdf-branding-text');
+    if (brandingText) {
+      brandingText.textContent = 'DESIGN BY RAMY';
+    }
+
+    // Force synchronous reflow so the DOM updates immediately
+    void element.offsetHeight;
+
+    // Call print synchronously to avoid mobile browser popup blockers
+    window.print();
+
+    // Restore original state
+    if (scrollableDiv) {
+      scrollableDiv.classList.add('max-h-[500px]', 'overflow-y-auto');
+    }
+    if (brandingText) {
+      brandingText.textContent = 'DESIGN BY STUDENT';
     }
   };
 
@@ -786,17 +866,23 @@ export default function App() {
                 <p className="text-zinc-400 mb-8">Get the exact blueprint, curated resources, habit tracker, and expert advice to land your dream job.</p>
                 
                 {!isProUnlocked ? (
-                  <div className="flex flex-col items-center gap-4">
-                    <a 
-                      href="https://razorpay.me/@carriercheckreality9"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => setShowPaymentVerification(true)}
-                      style={{ zIndex: 9999, position: 'relative', pointerEvents: 'auto', cursor: 'pointer' }}
-                      className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-black font-bold px-8 py-4 rounded-xl hover:bg-yellow-500 transition-colors w-full md:w-auto"
-                    >
-                      Unlock Pro Version <ArrowRight className="w-5 h-5" />
-                    </a>
+                  <div className="flex flex-col items-center gap-4 w-full max-w-md mx-auto">
+                    <div className="flex flex-col gap-3 w-full">
+                      <button 
+                        onClick={handleInitiatePayment}
+                        style={{ zIndex: 9999, position: 'relative', pointerEvents: 'auto', cursor: 'pointer' }}
+                        className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-black font-bold px-8 py-4 rounded-xl hover:bg-yellow-500 transition-colors w-full"
+                      >
+                        Step 1: Pay ₹{settings.price} <ArrowRight className="w-5 h-5" />
+                      </button>
+                      <button 
+                        onClick={() => setShowPaymentVerification(true)}
+                        style={{ zIndex: 9999, position: 'relative', pointerEvents: 'auto', cursor: 'pointer' }}
+                        className="inline-flex items-center justify-center gap-2 bg-[#18181B] border border-yellow-400/50 text-yellow-400 font-bold px-8 py-4 rounded-xl hover:bg-yellow-400/10 transition-colors w-full"
+                      >
+                        Step 2: Verify Payment <Shield className="w-5 h-5" />
+                      </button>
+                    </div>
                     
                     {/* Admin Bypass Input */}
                     <div className="mt-2 flex items-center justify-center gap-2 opacity-30 hover:opacity-100 transition-opacity focus-within:opacity-100">
@@ -881,12 +967,20 @@ export default function App() {
                     </div>
                     <h2 className="text-2xl font-display font-bold text-white">30-Day Pro Roadmap</h2>
                   </div>
-                  <button 
-                    onClick={handleDownloadRoadmap}
-                    className="hidden md:flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition-colors text-sm font-bold bg-yellow-400/10 px-4 py-2 rounded-lg"
-                  >
-                    <Download className="w-4 h-4" /> Download PDF
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={handlePrintRoadmap}
+                      className="hidden md:flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors text-sm font-bold bg-blue-400/10 px-4 py-2 rounded-lg print:hidden"
+                    >
+                      <Printer className="w-4 h-4" /> Print
+                    </button>
+                    <button 
+                      onClick={handleDownloadRoadmap}
+                      className="hidden md:flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition-colors text-sm font-bold bg-yellow-400/10 px-4 py-2 rounded-lg print:hidden"
+                    >
+                      <Download className="w-4 h-4" /> Download PDF
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="space-y-4 mb-8 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
@@ -974,14 +1068,22 @@ export default function App() {
                 </div>
               </div>
               
-              <button 
-                onClick={handleDownloadRoadmap}
-                className="md:hidden w-full flex items-center justify-center gap-2 text-black font-bold bg-yellow-400 hover:bg-yellow-500 transition-colors px-6 py-4 rounded-xl"
-              >
-                <Download className="w-5 h-5" /> Download Pro Roadmap
-              </button>
+              <div className="flex flex-col gap-3 md:hidden print:hidden">
+                <button 
+                  onClick={handleDownloadRoadmap}
+                  className="w-full flex items-center justify-center gap-2 text-black font-bold bg-yellow-400 hover:bg-yellow-500 transition-colors px-6 py-4 rounded-xl"
+                >
+                  <Download className="w-5 h-5" /> Download Pro Roadmap
+                </button>
+                <button 
+                  onClick={handlePrintRoadmap}
+                  className="w-full flex items-center justify-center gap-2 text-blue-400 font-bold bg-blue-400/10 hover:bg-blue-400/20 transition-colors px-6 py-4 rounded-xl"
+                >
+                  <Printer className="w-5 h-5" /> Print Roadmap
+                </button>
+              </div>
 
-              <div className="text-center pt-8">
+              <div className="text-center pt-8 print:hidden">
                 <button 
                   onClick={() => setResult(null)}
                   className="text-zinc-500 hover:text-white transition-colors underline underline-offset-4 text-sm"
@@ -1232,18 +1334,23 @@ export default function App() {
             </div>
           </div>
 
-          <a 
-            href="https://razorpay.me/@carriercheckreality9"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => {
-              setShowProBenefits(false);
-              setShowPaymentVerification(true);
-            }}
-            className="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2 text-lg"
-          >
-            Pay ₹{settings.price} & Unlock Now <ArrowRight className="w-5 h-5" />
-          </a>
+          <div className="flex flex-col gap-3 mt-6">
+            <button 
+              onClick={handleInitiatePayment}
+              className="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2 text-lg"
+            >
+              Step 1: Pay ₹{settings.price} <ArrowRight className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={() => {
+                setShowProBenefits(false);
+                setShowPaymentVerification(true);
+              }}
+              className="w-full bg-[#18181B] border border-yellow-400/50 text-yellow-400 font-bold py-4 rounded-xl hover:bg-yellow-400/10 transition-colors flex items-center justify-center gap-2 text-lg"
+            >
+              Step 2: Verify Payment <Shield className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </Modal>
 
@@ -1260,8 +1367,20 @@ export default function App() {
             Payment Initiated
           </h3>
           
+          <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-xl text-left">
+            <p className="text-red-400 text-sm font-bold flex items-center gap-2 mb-2">
+              <AlertTriangle className="w-5 h-5" />
+              STRICT WARNING & NO REFUND POLICY
+            </p>
+            <p className="text-zinc-300 text-xs">
+              You must pay exactly <strong className="text-white">₹{settings.price}</strong>. If you pay less, the system will reject your transaction ID and your roadmap will NOT be unlocked.
+              <br /><br />
+              <strong className="text-red-400">Note: Payment is strictly non-refundable (Paise kisi bhi haal mein refund nahi honge).</strong>
+            </p>
+          </div>
+
           <p className="text-sm text-zinc-400">
-            Please complete your payment of <strong className="text-yellow-400">₹{settings.price}</strong> on the Razorpay page that opened. Once done, enter the Transaction ID below to unlock your Pro Roadmap.
+            Please complete your payment on the Razorpay page. Once done, enter the Transaction ID below.
           </p>
 
           <div className="text-left">
@@ -1272,15 +1391,36 @@ export default function App() {
               value={transactionId}
               onChange={(e) => setTransactionId(e.target.value)}
               placeholder="e.g. pay_P1234567890"
-              className="w-full bg-[#18181B] border border-white/10 rounded-xl py-3 px-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 transition-all"
+              className="w-full bg-[#18181B] border border-white/10 rounded-xl py-3 px-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 transition-all mb-4"
             />
+            
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <div className="relative flex items-center justify-center mt-1">
+                <input 
+                  type="checkbox" 
+                  checked={amountConfirmed}
+                  onChange={(e) => setAmountConfirmed(e.target.checked)}
+                  className="peer sr-only"
+                />
+                <div className="w-5 h-5 border-2 border-zinc-600 rounded bg-[#18181B] peer-checked:bg-yellow-400 peer-checked:border-yellow-400 transition-colors"></div>
+                <CheckSquare className="w-3.5 h-3.5 text-black absolute opacity-0 peer-checked:opacity-100 transition-opacity" />
+              </div>
+              <span className="text-xs text-zinc-400 group-hover:text-zinc-300 transition-colors">
+                I confirm that I have paid exactly <strong className="text-white">₹{settings.price}</strong>. I understand that entering a fake ID or paying less will result in permanent ban.
+              </span>
+            </label>
           </div>
 
           <button 
             type="submit"
-            className="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2 text-lg"
+            disabled={!amountConfirmed || isVerifying}
+            className="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Verify & Unlock <Sparkles className="w-5 h-5" />
+            {isVerifying ? (
+              <>Verifying Payment... <Loader2 className="w-5 h-5 animate-spin" /></>
+            ) : (
+              <>Verify & Unlock <Sparkles className="w-5 h-5" /></>
+            )}
           </button>
         </form>
       </Modal>
