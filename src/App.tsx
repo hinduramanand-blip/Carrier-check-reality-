@@ -113,11 +113,17 @@ export default function App() {
   const [isStandalone, setIsStandalone] = useState(false);
 
   const [apiError, setApiError] = useState<string | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
 
   // Load state on mount
   useEffect(() => {
     const savedResult = localStorage.getItem('careerResult');
     const savedProStatus = localStorage.getItem('isProUnlocked');
+    const hasSeenGuide = localStorage.getItem('hasSeenGuide');
+    
+    if (!hasSeenGuide) {
+      setShowGuide(true);
+    }
     
     if (savedResult) {
       try {
@@ -1290,6 +1296,54 @@ export default function App() {
           <p className="text-xs text-zinc-500 mt-4">
             Install this web app directly to your device's home screen for the best experience.
           </p>
+        </div>
+      </Modal>
+
+      {/* Welcome Guide Modal */}
+      <Modal isOpen={showGuide} onClose={() => {
+        setShowGuide(false);
+        localStorage.setItem('hasSeenGuide', 'true');
+      }} title="Welcome to Career Reality Check! 🎯">
+        <div className="space-y-6">
+          <p className="text-zinc-300 text-sm">
+            Naye ho? Koi baat nahi! Yahan hum aapko aapke career ka sach batayenge aur ek solid roadmap denge.
+          </p>
+          
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-blue-400/10 rounded-lg shrink-0 text-blue-400 font-bold">1</div>
+              <div>
+                <p className="font-bold text-white">Enter Details</p>
+                <p className="text-xs text-zinc-400">Apna naam, dream job aur social media ka time daalein.</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-red-400/10 rounded-lg shrink-0 text-red-400 font-bold">2</div>
+              <div>
+                <p className="font-bold text-white">Get Reality Check</p>
+                <p className="text-xs text-zinc-400">AI aapko ek brutal reality check aur free basic roadmap dega.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-yellow-400/10 rounded-lg shrink-0 text-yellow-400 font-bold">3</div>
+              <div>
+                <p className="font-bold text-white">Unlock Pro Roadmap</p>
+                <p className="text-xs text-zinc-400">Sirf ₹{settings.price} mein 30-din ka step-by-step action plan paayein!</p>
+              </div>
+            </div>
+          </div>
+
+          <button 
+            onClick={() => {
+              setShowGuide(false);
+              localStorage.setItem('hasSeenGuide', 'true');
+            }}
+            className="w-full bg-white text-black font-bold py-4 rounded-xl hover:bg-zinc-200 transition-colors mt-4"
+          >
+            Let's Start! 🚀
+          </button>
         </div>
       </Modal>
 
