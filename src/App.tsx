@@ -7,8 +7,7 @@ import Chatbot from './components/Chatbot';
 import AdminDashboard from './components/AdminDashboard';
 import { getSettings, incrementVisits, incrementClicks, addFeedback, incrementRoasts, incrementProUnlocks } from './lib/store';
 import { jobList, jobCategories } from './lib/jobs';
-// @ts-ignore
-import html2pdf from 'html2pdf.js';
+import html2canvas from 'html2canvas';
 
 const generateWithRetry = async (modelName: string, contents: string, config: any, maxRetries = 3) => {
   let attempt = 0;
@@ -38,6 +37,7 @@ const generateWithRetry = async (modelName: string, contents: string, config: an
 interface RoadmapDay {
   day: number;
   task: string;
+  book?: string;
 }
 
 interface FreeResultData {
@@ -275,6 +275,7 @@ export default function App() {
            - Phase 2: Action (Day 11-20) - Detailed step-by-step strategy for their specific goal (job/business).
            - Phase 3: Mastery (Day 21-30) - Scaling tips & Elite Book list.
            *MANDATORY VIRAL FEATURE*: On Days 5, 10, 15, 20, 25, and 30, append this exact message to the task string: "🚀 Progress is better together! Share this with a friend to grow as a team!"
+           *MANDATORY BOOK FEATURE*: For EVERY SINGLE DAY (Day 1 to 30), provide ONE highly relevant book recommendation ('book' field) related to their specific goal/field. So they get 30 books in 30 days.
         3. resources: A curated "Master Reading List" (Top 3 books). For each book, provide the 'title' (just the book name) and 'description' (a short summary in Hinglish).
         4. habitTracker: Specific "Power Habits" that clear mental fog and increase focus 10x (3-4 habits) in Hinglish.
         5. expertAdvice: Provide elite advice in Hinglish and end with these exact 'Save & Download Instructions' (in English):
@@ -297,8 +298,9 @@ export default function App() {
                   properties: {
                     day: { type: Type.INTEGER },
                     task: { type: Type.STRING },
+                    book: { type: Type.STRING, description: "A highly relevant book recommendation for this specific day" },
                   },
-                  required: ['day', 'task'],
+                  required: ['day', 'task', 'book'],
                 },
               },
               resources: {
@@ -338,21 +340,13 @@ export default function App() {
   };
 
   const handleInitiatePayment = () => {
-    if (settings.razorpayLink) {
-      let url = settings.razorpayLink;
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'https://' + url;
-      }
-      window.open(url, '_blank');
-      setShowProBenefits(false);
-      setShowPaymentVerification(true);
-    } else {
-      alert('Payment link not configured by admin. Unlocking for demo purposes.');
-      incrementProUnlocks();
-      setIsProUnlocked(true);
-      handleGeneratePro();
-      setShowProBenefits(false);
+    let url = settings.razorpayLink || "https://razorpay.me/@carriercheckreality9";
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
     }
+    window.open(url, '_blank');
+    setShowProBenefits(false);
+    setShowPaymentVerification(true);
   };
 
   const handleVerifyPayment = (e: React.FormEvent) => {
@@ -388,20 +382,22 @@ export default function App() {
       scrollableDiv.classList.remove('max-h-[500px]', 'overflow-y-auto');
     }
 
-    // Hide download buttons during PDF generation
+    // Hide download buttons during PNG generation
     const downloadBtns = element.querySelectorAll('button');
     downloadBtns.forEach(btn => btn.style.display = 'none');
 
     try {
-      const opt = {
-        margin:       0.2,
-        filename:     'My_Pro_Roadmap.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#09090B' },
-        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-      };
+      const canvas = await html2canvas(element, { 
+        backgroundColor: '#09090B',
+        scale: 2,
+        useCORS: true
+      });
       
-      await html2pdf().set(opt).from(element).save();
+      const data = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = data;
+      link.download = 'My_Pro_Roadmap.png';
+      link.click();
     } catch (err) {
       console.error('Error downloading roadmap:', err);
       alert('Failed to download roadmap. Please try again.');
@@ -761,7 +757,7 @@ export default function App() {
                 {!isProUnlocked ? (
                   <div className="flex flex-col items-center gap-4">
                     <a 
-                      href={settings.razorpayLink.startsWith('http') ? settings.razorpayLink : `https://${settings.razorpayLink}`}
+                      href={settings.razorpayLink ? (settings.razorpayLink.startsWith('http') ? settings.razorpayLink : `https://${settings.razorpayLink}`) : "https://razorpay.me/@carriercheckreality9"}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => setShowPaymentVerification(true)}
@@ -858,7 +854,7 @@ export default function App() {
                     onClick={handleDownloadRoadmap}
                     className="hidden md:flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition-colors text-sm font-bold bg-yellow-400/10 px-4 py-2 rounded-lg"
                   >
-                    <Download className="w-4 h-4" /> Download PDF
+                    <Download className="w-4 h-4" /> Download Image
                   </button>
                 </div>
                 
@@ -868,8 +864,14 @@ export default function App() {
                       <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[#18181B] border border-white/10 flex items-center justify-center font-display font-bold text-yellow-400 group-hover:scale-110 transition-transform">
                         D{day.day}
                       </div>
-                      <div className="flex items-center">
-                        <p className="text-zinc-300 text-sm md:text-base">{day.task}</p>
+                      <div className="flex flex-col justify-center">
+                        <p className="text-zinc-300 text-sm md:text-base mb-2">{day.task}</p>
+                        {day.book && (
+                          <div className="flex items-center gap-2 text-xs text-yellow-400/80 bg-yellow-400/10 w-fit px-3 py-1 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                            <span>Book of the Day: {day.book}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -1187,9 +1189,9 @@ export default function App() {
             </div>
           </div>
 
-          {settings.razorpayLink ? (
+          {settings.razorpayLink || "https://razorpay.me/@carriercheckreality9" ? (
             <a 
-              href={settings.razorpayLink.startsWith('http') ? settings.razorpayLink : `https://${settings.razorpayLink}`}
+              href={settings.razorpayLink ? (settings.razorpayLink.startsWith('http') ? settings.razorpayLink : `https://${settings.razorpayLink}`) : "https://razorpay.me/@carriercheckreality9"}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => {

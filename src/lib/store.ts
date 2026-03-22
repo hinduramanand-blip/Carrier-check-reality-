@@ -2,7 +2,7 @@ export const getSettings = () => {
   const defaultSettings = { 
     price: 19, 
     roastMode: 'Savage', 
-    razorpayLink: 'https://razorpay.me/@carriercheckreality9?amount=19',
+    razorpayLink: 'https://razorpay.me/@carriercheckreality9',
     adSenseId: '',
     customAdImageUrl: '',
     customAdLink: '',
@@ -20,8 +20,8 @@ export const getSettings = () => {
   const saved = localStorage.getItem('app_settings');
   const parsed = saved ? JSON.parse(saved) : {};
   
-  // Ensure we use the default razorpay link if the saved one is empty or the old one without amount
-  if (parsed && (!parsed.razorpayLink || parsed.razorpayLink === 'https://razorpay.me/@carriercheckreality9')) {
+  // Ensure we use the default razorpay link if the saved one is empty or the broken one with amount
+  if (parsed && (!parsed.razorpayLink || parsed.razorpayLink === 'https://razorpay.me/@carriercheckreality9?amount=19')) {
     parsed.razorpayLink = defaultSettings.razorpayLink;
   }
   
