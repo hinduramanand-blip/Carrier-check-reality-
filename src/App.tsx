@@ -70,7 +70,10 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ResultData | null>(null);
   const [isProUnlocked, setIsProUnlocked] = useState(false);
+  const [isAdminUnlock, setIsAdminUnlock] = useState(false);
   const [secretCode, setSecretCode] = useState('');
+  const [showAdminInput, setShowAdminInput] = useState(false);
+  const [secretClickCount, setSecretClickCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   
   // New State
@@ -119,6 +122,7 @@ export default function App() {
   useEffect(() => {
     const savedResult = localStorage.getItem('careerResult');
     const savedProStatus = localStorage.getItem('isProUnlocked');
+    const savedAdminUnlock = localStorage.getItem('isAdminUnlock');
     const hasSeenGuide = localStorage.getItem('hasSeenGuide');
     
     if (!hasSeenGuide) {
@@ -136,6 +140,9 @@ export default function App() {
     if (savedProStatus === 'true') {
       setIsProUnlocked(true);
     }
+    if (savedAdminUnlock === 'true') {
+      setIsAdminUnlock(true);
+    }
   }, []);
 
   // Save state on change
@@ -150,6 +157,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('isProUnlocked', isProUnlocked.toString());
   }, [isProUnlocked]);
+
+  useEffect(() => {
+    localStorage.setItem('isAdminUnlock', isAdminUnlock.toString());
+  }, [isAdminUnlock]);
 
   const handleInitiatePayment = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -425,11 +436,23 @@ export default function App() {
     if (secretCode === 'ADMIN@2026') {
       incrementProUnlocks();
       setIsProUnlocked(true);
+      setIsAdminUnlock(true);
       handleGeneratePro();
       setSecretCode('');
+      setShowAdminInput(false);
     } else {
       alert('Invalid access code. Please proceed with payment.');
     }
+  };
+
+  const handleSecretClick = () => {
+    setSecretClickCount(prev => {
+      if (prev + 1 >= 5) {
+        setShowAdminInput(true);
+        return 0;
+      }
+      return prev + 1;
+    });
   };
 
   const handleDownloadRoadmap = async () => {
@@ -446,53 +469,110 @@ export default function App() {
     downloadBtns.forEach(btn => btn.style.display = 'none');
 
     const brandingText = element.querySelector('#pdf-branding-text');
+    const originalBranding = brandingText ? brandingText.textContent : '';
     if (brandingText) {
-      brandingText.textContent = 'DESIGN BY RAMY';
+      brandingText.textContent = isAdminUnlock ? 'DESIGN BY RAMY (ADMIN MODE)' : 'DESIGN BY RAMY';
     }
+
+    // Show loading toast
+    const loadingToast = document.createElement('div');
+    loadingToast.innerHTML = 'Generating High-Quality PDF... Please wait.';
+    loadingToast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#eab308;color:black;padding:10px 20px;border-radius:8px;font-weight:bold;z-index:99999;box-shadow:0 4px 6px rgba(0,0,0,0.3);';
+    document.body.appendChild(loadingToast);
 
     // Wait for DOM to update and repaint before capturing
     await new Promise(resolve => setTimeout(resolve, 500));
 
     try {
-      // Use html-to-image to avoid oklch parsing errors from html2canvas
-      const dataUrl = await toJpeg(element, {
-        quality: 0.95,
-        backgroundColor: '#09090B',
-        pixelRatio: 2
-      });
-
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      let currentY = margin;
 
-      // Calculate image dimensions to fit width
-      const imgProps = pdf.getImageProperties(dataUrl);
-      const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      const setPdfBackground = () => {
+        pdf.setFillColor(24, 24, 27); // #18181B
+        pdf.rect(0, 0, pdfWidth, pageHeight, 'F');
+      };
 
-      let heightLeft = imgHeight;
-      let position = 0;
+      setPdfBackground();
+      const originalAddPage = pdf.addPage.bind(pdf);
+      pdf.addPage = function() {
+        originalAddPage();
+        setPdfBackground();
+        return this;
+      };
 
-      pdf.addImage(dataUrl, 'JPEG', 0, position, pdfWidth, imgHeight);
-      heightLeft -= pdfHeight;
+      const captureAndAdd = async (el: HTMLElement) => {
+        if (!el) return;
+        const dataUrl = await toJpeg(el, { 
+          quality: 0.95, 
+          backgroundColor: '#18181B', // Match card background
+          pixelRatio: 2 
+        });
+        const imgProps = pdf.getImageProperties(dataUrl);
+        const imgHeight = (imgProps.height * (pdfWidth - margin * 2)) / imgProps.width;
 
-      while (heightLeft > 0) {
-        position -= pdfHeight;
-        pdf.addPage();
-        pdf.addImage(dataUrl, 'JPEG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pdfHeight;
+        if (currentY + imgHeight > pageHeight - margin) {
+          pdf.addPage();
+          currentY = margin;
+        }
+
+        pdf.addImage(dataUrl, 'JPEG', margin, currentY, pdfWidth - margin * 2, imgHeight);
+        currentY += imgHeight + 5; // 5mm gap
+      };
+
+      // Capture sections
+      const header = document.getElementById('pdf-header');
+      if (header) await captureAndAdd(header);
+
+      const days = document.querySelectorAll('.roadmap-day-card');
+      if (days.length > 0) {
+        // Day 1 on first page
+        await captureAndAdd(days[0] as HTMLElement);
+        
+        // Force new page for Day 2 onwards
+        if (days.length > 1) {
+          pdf.addPage();
+          currentY = margin;
+        }
+
+        for (let i = 1; i < days.length; i++) {
+          await captureAndAdd(days[i] as HTMLElement);
+          
+          // Force new page after every 2 days (i=2, i=4, i=6...)
+          if (i % 2 === 0 && i !== days.length - 1) {
+            pdf.addPage();
+            currentY = margin;
+          }
+        }
       }
 
-      pdf.save('My_Pro_Roadmap.pdf');
+      // Force new page for resources
+      pdf.addPage();
+      currentY = margin;
+
+      const resources = document.getElementById('pdf-resources');
+      if (resources) await captureAndAdd(resources);
+
+      const expert = document.getElementById('pdf-expert');
+      if (expert) await captureAndAdd(expert);
+
+      const footer = document.getElementById('pdf-footer');
+      if (footer) await captureAndAdd(footer);
+
+      pdf.save(isAdminUnlock ? 'Admin_Pro_Roadmap.pdf' : 'My_Pro_Roadmap.pdf');
     } catch (err) {
       console.error('Error downloading roadmap:', err);
       alert('Failed to download roadmap. Please try again.');
     } finally {
+      document.body.removeChild(loadingToast);
       if (scrollableDiv) {
         scrollableDiv.classList.add('max-h-[500px]', 'overflow-y-auto');
       }
       downloadBtns.forEach(btn => btn.style.display = '');
       if (brandingText) {
-        brandingText.textContent = 'DESIGN BY STUDENT';
+        brandingText.textContent = originalBranding;
       }
     }
   };
@@ -507,8 +587,9 @@ export default function App() {
     }
 
     const brandingText = element.querySelector('#pdf-branding-text');
+    const originalBranding = brandingText ? brandingText.textContent : '';
     if (brandingText) {
-      brandingText.textContent = 'DESIGN BY RAMY';
+      brandingText.textContent = isAdminUnlock ? 'DESIGN BY RAMY (ADMIN MODE)' : 'DESIGN BY RAMY';
     }
 
     // Force synchronous reflow so the DOM updates immediately
@@ -522,7 +603,7 @@ export default function App() {
       scrollableDiv.classList.add('max-h-[500px]', 'overflow-y-auto');
     }
     if (brandingText) {
-      brandingText.textContent = 'DESIGN BY STUDENT';
+      brandingText.textContent = originalBranding;
     }
   };
 
@@ -867,7 +948,7 @@ export default function App() {
               {/* The Hook */}
               <div className="bg-gradient-to-br from-[#18181B] to-[#09090B] rounded-3xl p-8 border border-yellow-400/50 text-center relative overflow-hidden group">
                 <div className="absolute inset-0 bg-yellow-400/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <Lock className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
+                <Lock className="w-10 h-10 text-yellow-400 mx-auto mb-4 cursor-pointer" onClick={handleSecretClick} />
                 <h3 className="text-2xl font-display font-bold text-white mb-2">Unlock the 30-Day Pro Roadmap</h3>
                 <p className="text-zinc-400 mb-8">Get the exact blueprint, curated resources, habit tracker, and expert advice to land your dream job.</p>
                 
@@ -891,21 +972,23 @@ export default function App() {
                     </div>
                     
                     {/* Admin Bypass Input */}
-                    <div className="mt-2 flex items-center justify-center gap-2 opacity-30 hover:opacity-100 transition-opacity focus-within:opacity-100">
-                      <input
-                        type="password"
-                        value={secretCode}
-                        onChange={(e) => setSecretCode(e.target.value)}
-                        placeholder="Secret Code"
-                        className="bg-transparent border-b border-zinc-600 text-xs text-center text-zinc-400 focus:outline-none focus:border-yellow-400 w-24"
-                      />
-                      <button
-                        onClick={handleAdminBypass}
-                        className="text-xs text-zinc-500 hover:text-yellow-400 transition-colors"
-                      >
-                        Admin Unlock
-                      </button>
-                    </div>
+                    {showAdminInput && (
+                      <div className="mt-2 flex items-center justify-center gap-2 opacity-30 hover:opacity-100 transition-opacity focus-within:opacity-100">
+                        <input
+                          type="password"
+                          value={secretCode}
+                          onChange={(e) => setSecretCode(e.target.value)}
+                          placeholder="Secret Code"
+                          className="bg-transparent border-b border-zinc-600 text-xs text-center text-zinc-400 focus:outline-none focus:border-yellow-400 w-24"
+                        />
+                        <button
+                          onClick={handleAdminBypass}
+                          className="text-xs text-zinc-500 hover:text-yellow-400 transition-colors"
+                        >
+                          Admin Unlock
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-4">
@@ -966,7 +1049,7 @@ export default function App() {
 
               {/* Pro Roadmap Card (Downloadable) */}
               <div id="pro-roadmap-card" className="bg-[#18181B] rounded-3xl p-6 md:p-8 border-2 border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.3)] relative">
-                <div className="flex items-center justify-between mb-8">
+                <div id="pdf-header" className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-yellow-400/20 rounded-lg text-yellow-400">
                       <Target className="w-6 h-6" />
@@ -989,9 +1072,9 @@ export default function App() {
                   </div>
                 </div>
                 
-                <div className="space-y-4 mb-8 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                <div id="pdf-content" className="space-y-4 mb-8 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                   {result.proRoadmap.map((day) => (
-                    <div key={day.day} className="flex gap-4 p-4 rounded-2xl bg-[#09090B] border border-white/5 hover:border-yellow-400/30 transition-colors group">
+                    <div key={day.day} className="roadmap-day-card flex gap-4 p-4 rounded-2xl bg-[#09090B] border border-white/5 hover:border-yellow-400/30 transition-colors group">
                       <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[#18181B] border border-white/10 flex items-center justify-center font-display font-bold text-yellow-400 group-hover:scale-110 transition-transform">
                         D{day.day}
                       </div>
@@ -1020,7 +1103,7 @@ export default function App() {
                   ))}
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6 mb-8">
+                <div id="pdf-resources" className="grid md:grid-cols-2 gap-6 mb-8">
                   <div className="bg-[#09090B] p-6 rounded-2xl border border-white/5">
                     <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                       <Shield className="w-5 h-5 text-[#04D9FF]" /> Curated Resources
@@ -1061,7 +1144,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="bg-[#09090B] p-6 rounded-2xl border border-white/5 mb-8">
+                <div id="pdf-expert" className="bg-[#09090B] p-6 rounded-2xl border border-white/5 mb-8">
                   <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-yellow-400" /> Expert Career Advice
                   </h3>
@@ -1069,8 +1152,10 @@ export default function App() {
                 </div>
 
                 {/* Branding Footer */}
-                <div className="border-t border-white/10 pt-6 text-center">
-                  <p id="pdf-branding-text" className="text-yellow-400/80 font-display font-bold tracking-widest uppercase text-sm">DESIGN BY STUDENT</p>
+                <div id="pdf-footer" className="border-t border-white/10 pt-6 text-center">
+                  <p id="pdf-branding-text" className="text-yellow-400/80 font-display font-bold tracking-widest uppercase text-sm">
+                    {isAdminUnlock ? 'DESIGN BY RAMY (ADMIN)' : 'DESIGN BY STUDENT'}
+                  </p>
                 </div>
               </div>
               
