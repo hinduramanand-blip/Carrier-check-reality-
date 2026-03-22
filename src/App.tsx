@@ -121,8 +121,6 @@ export default function App() {
   // Load state on mount
   useEffect(() => {
     const savedResult = localStorage.getItem('careerResult');
-    const savedProStatus = localStorage.getItem('isProUnlocked');
-    const savedAdminUnlock = localStorage.getItem('isAdminUnlock');
     const hasSeenGuide = localStorage.getItem('hasSeenGuide');
     
     if (!hasSeenGuide) {
@@ -136,13 +134,6 @@ export default function App() {
         console.error('Failed to parse saved result', e);
       }
     }
-    
-    if (savedProStatus === 'true') {
-      setIsProUnlocked(true);
-    }
-    if (savedAdminUnlock === 'true') {
-      setIsAdminUnlock(true);
-    }
   }, []);
 
   // Save state on change
@@ -153,14 +144,6 @@ export default function App() {
       localStorage.removeItem('careerResult');
     }
   }, [result]);
-
-  useEffect(() => {
-    localStorage.setItem('isProUnlocked', isProUnlocked.toString());
-  }, [isProUnlocked]);
-
-  useEffect(() => {
-    localStorage.setItem('isAdminUnlock', isAdminUnlock.toString());
-  }, [isAdminUnlock]);
 
   const handleInitiatePayment = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -446,13 +429,7 @@ export default function App() {
   };
 
   const handleSecretClick = () => {
-    setSecretClickCount(prev => {
-      if (prev + 1 >= 5) {
-        setShowAdminInput(true);
-        return 0;
-      }
-      return prev + 1;
-    });
+    setShowAdminInput(prev => !prev);
   };
 
   const handleDownloadRoadmap = async () => {
@@ -481,85 +458,37 @@ export default function App() {
     document.body.appendChild(loadingToast);
 
     // Wait for DOM to update and repaint before capturing
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
+      // Capture the entire element at once for much faster generation
+      const dataUrl = await toJpeg(element, { 
+        quality: 0.8, 
+        backgroundColor: '#18181B',
+        pixelRatio: 1.5 
+      });
+
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 10;
-      let currentY = margin;
-
-      const setPdfBackground = () => {
-        pdf.setFillColor(24, 24, 27); // #18181B
-        pdf.rect(0, 0, pdfWidth, pageHeight, 'F');
-      };
-
-      setPdfBackground();
-      const originalAddPage = pdf.addPage.bind(pdf);
-      pdf.addPage = function() {
-        originalAddPage();
-        setPdfBackground();
-        return this;
-      };
-
-      const captureAndAdd = async (el: HTMLElement) => {
-        if (!el) return;
-        const dataUrl = await toJpeg(el, { 
-          quality: 0.95, 
-          backgroundColor: '#18181B', // Match card background
-          pixelRatio: 2 
-        });
-        const imgProps = pdf.getImageProperties(dataUrl);
-        const imgHeight = (imgProps.height * (pdfWidth - margin * 2)) / imgProps.width;
-
-        if (currentY + imgHeight > pageHeight - margin) {
-          pdf.addPage();
-          currentY = margin;
-        }
-
-        pdf.addImage(dataUrl, 'JPEG', margin, currentY, pdfWidth - margin * 2, imgHeight);
-        currentY += imgHeight + 5; // 5mm gap
-      };
-
-      // Capture sections
-      const header = document.getElementById('pdf-header');
-      if (header) await captureAndAdd(header);
-
-      const days = document.querySelectorAll('.roadmap-day-card');
-      if (days.length > 0) {
-        // Day 1 on first page
-        await captureAndAdd(days[0] as HTMLElement);
-        
-        // Force new page for Day 2 onwards
-        if (days.length > 1) {
-          pdf.addPage();
-          currentY = margin;
-        }
-
-        for (let i = 1; i < days.length; i++) {
-          await captureAndAdd(days[i] as HTMLElement);
-          
-          // Force new page after every 2 days (i=2, i=4, i=6...)
-          if (i % 2 === 0 && i !== days.length - 1) {
-            pdf.addPage();
-            currentY = margin;
-          }
-        }
+      
+      const imgProps = pdf.getImageProperties(dataUrl);
+      const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      // Add first page
+      pdf.addImage(dataUrl, 'JPEG', 0, position, pdfWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      // Add subsequent pages if the image is taller than one page
+      while (heightLeft > 0) {
+        position -= pageHeight;
+        pdf.addPage();
+        pdf.addImage(dataUrl, 'JPEG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pageHeight;
       }
-
-      // Force new page for resources
-      pdf.addPage();
-      currentY = margin;
-
-      const resources = document.getElementById('pdf-resources');
-      if (resources) await captureAndAdd(resources);
-
-      const expert = document.getElementById('pdf-expert');
-      if (expert) await captureAndAdd(expert);
-
-      const footer = document.getElementById('pdf-footer');
-      if (footer) await captureAndAdd(footer);
 
       pdf.save(isAdminUnlock ? 'Admin_Pro_Roadmap.pdf' : 'My_Pro_Roadmap.pdf');
     } catch (err) {
@@ -947,46 +876,61 @@ export default function App() {
 
               {/* The Hook */}
               <div className="bg-gradient-to-br from-[#18181B] to-[#09090B] rounded-3xl p-8 border border-yellow-400/50 text-center relative overflow-hidden group">
-                <div className="absolute inset-0 bg-yellow-400/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <Lock className="w-10 h-10 text-yellow-400 mx-auto mb-4 cursor-pointer" onClick={handleSecretClick} />
-                <h3 className="text-2xl font-display font-bold text-white mb-2">Unlock the 30-Day Pro Roadmap</h3>
-                <p className="text-zinc-400 mb-8">Get the exact blueprint, curated resources, habit tracker, and expert advice to land your dream job.</p>
+                <div className="absolute inset-0 bg-yellow-400/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                <Lock className="w-10 h-10 text-yellow-400 mx-auto mb-4 cursor-pointer relative z-10" onClick={handleSecretClick} />
+                <h3 className="text-2xl font-display font-bold text-white mb-2 relative z-10">Unlock the 30-Day Pro Roadmap</h3>
+                <p className="text-zinc-400 mb-8 relative z-10">Get the exact blueprint, curated resources, habit tracker, and expert advice to land your dream job.</p>
                 
                 {!isProUnlocked ? (
-                  <div className="flex flex-col items-center gap-4 w-full max-w-md mx-auto">
+                  <div className="flex flex-col items-center gap-4 w-full max-w-md mx-auto relative z-10">
                     <div className="flex flex-col gap-3 w-full">
                       <button 
                         onClick={() => setShowProBenefits(true)}
-                        style={{ zIndex: 9999, position: 'relative', pointerEvents: 'auto', cursor: 'pointer' }}
                         className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-black font-bold px-8 py-4 rounded-xl hover:bg-yellow-500 transition-colors w-full"
                       >
                         View Pro Benefits & Unlock <ArrowRight className="w-5 h-5" />
                       </button>
                       <button 
                         onClick={() => setShowPaymentVerification(true)}
-                        style={{ zIndex: 9999, position: 'relative', pointerEvents: 'auto', cursor: 'pointer' }}
                         className="inline-flex items-center justify-center gap-2 bg-[#18181B] border border-yellow-400/50 text-yellow-400 font-bold px-8 py-4 rounded-xl hover:bg-yellow-400/10 transition-colors w-full"
                       >
                         Already Paid? Verify Here <Shield className="w-5 h-5" />
                       </button>
                     </div>
                     
-                    {/* Admin Bypass Input */}
+                    {/* Admin Panel */}
                     {showAdminInput && (
-                      <div className="mt-2 flex items-center justify-center gap-2 opacity-30 hover:opacity-100 transition-opacity focus-within:opacity-100">
-                        <input
-                          type="password"
-                          value={secretCode}
-                          onChange={(e) => setSecretCode(e.target.value)}
-                          placeholder="Secret Code"
-                          className="bg-transparent border-b border-zinc-600 text-xs text-center text-zinc-400 focus:outline-none focus:border-yellow-400 w-24"
-                        />
-                        <button
-                          onClick={handleAdminBypass}
-                          className="text-xs text-zinc-500 hover:text-yellow-400 transition-colors"
-                        >
-                          Admin Unlock
-                        </button>
+                      <div className="mt-6 w-full p-6 border border-red-500/30 bg-red-500/5 rounded-2xl relative z-20">
+                        <h4 className="text-red-400 font-bold mb-4 flex items-center justify-center gap-2">
+                          <Shield className="w-5 h-5" /> Admin Panel
+                        </h4>
+                        <div className="flex flex-col gap-3">
+                          <input
+                            type="password"
+                            value={secretCode}
+                            onChange={(e) => setSecretCode(e.target.value)}
+                            placeholder="Enter Admin Code"
+                            className="bg-[#09090B] border border-red-500/30 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-red-500 text-center"
+                          />
+                          <button
+                            onClick={handleAdminBypass}
+                            className="bg-red-500 text-white font-bold px-4 py-3 rounded-xl hover:bg-red-600 transition-colors"
+                          >
+                            Unlock Admin PDF
+                          </button>
+                          <button
+                            onClick={() => {
+                              localStorage.removeItem('isProUnlocked');
+                              localStorage.removeItem('isAdminUnlock');
+                              setIsProUnlocked(false);
+                              setIsAdminUnlock(false);
+                              window.location.reload();
+                            }}
+                            className="bg-zinc-800 text-zinc-300 font-bold px-4 py-3 rounded-xl hover:bg-zinc-700 transition-colors mt-2 text-sm"
+                          >
+                            Reset App State (Test Payment Flow)
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
