@@ -82,7 +82,7 @@ export default function App() {
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [settings, setSettings] = useState({ 
-    price: 9, 
+    price: 19, 
     roastMode: 'Savage', 
     razorpayLink: '',
     adSenseId: '',
@@ -314,21 +314,21 @@ export default function App() {
         Their dream goal/job is: ${dreamJob}. (This could be a job, business, or any other goal).
         They spend ${socialMediaHours} hours on social media daily.
         
-        Tone: Professional, motivating, and highly valuable. Ensure the value is so high that they feel their ₹9 was the best investment ever. Make it a complete, personalized dossier (poora chitta) of their path so they feel they received a premium, exhaustive blueprint.
+        Tone: Professional, motivating, extremely detailed and highly actionable. Ensure the value is so high that they feel their ₹19 was the best investment ever. Make it a complete, personalized dossier (poora chitta) of their path so they feel they received a premium, exhaustive blueprint. The plan should be substantially large, comprehensive, and impactful.
         
-        IMPORTANT: The entire response MUST be in a bilingual format (Hindi + English / Hinglish) so it's easily understood by everyone. Provide the absolute BEST advice tailored to their specific goal, whether it's a job, a business, or anything else.
+        IMPORTANT: The entire response MUST be in a bilingual format (Hindi + English / Hinglish) so it's easily understood by everyone. Provide the absolute BEST advice tailored to their specific goal.
         
-        1. savageRoast: Write an incredibly savage, brutal roast in Hinglish (Hindi + English) about their social media habits.
-        2. proRoadmap: Generate a detailed 30-day Pro roadmap with tasks in Hinglish.
-           - Phase 1: Foundation (Day 1-10) - Mindset shifts & Power habits.
-           - Phase 2: Action (Day 11-20) - Detailed step-by-step strategy for their specific goal (job/business).
-           - Phase 3: Mastery (Day 21-30) - Scaling tips & Elite Book list.
+        1. savageRoast: Write an incredibly savage, brutal roast in Hinglish about their social media habits.
+        2. proRoadmap: Generate a highly detailed 30-day Pro roadmap with tasks in Hinglish. Each task should be long and descriptive, breaking down exactly WHAT to do and HOW to do it.
+           - Phase 1: Foundation (Day 1-10) - Mindset shifts, Power habits, and Groundwork.
+           - Phase 2: Action (Day 11-20) - Detailed step-by-step strategy, Skill acquisition, and Networking.
+           - Phase 3: Mastery (Day 21-30) - Scaling tips, Portfolio building, and Elite performance execution.
            *MANDATORY VIRAL FEATURE*: On Days 5, 10, 15, 20, 25, and 30, append this exact message to the task string: "🚀 Progress is better together! Share this with a friend to grow as a team!"
            *MANDATORY BOOK FEATURE*: For EVERY SINGLE DAY (Day 1 to 30), provide ONE highly relevant book recommendation ('book' field) related to their specific goal/field. So they get 30 books in 30 days.
-           *MANDATORY TIME & TOOL*: For each day, provide a realistic 'timeCommitment' (e.g., '45 mins', '1.5 hours') and a specific 'tool' to use (e.g., 'Notion', 'LinkedIn', 'Figma', 'ChatGPT').
-        3. resources: A curated "Master Reading List" (Top 3 books). For each book, provide the 'title' (just the book name) and 'description' (a short summary in Hinglish).
-        4. habitTracker: Specific "Power Habits" that clear mental fog and increase focus 10x (3-4 habits) in Hinglish.
-        5. expertAdvice: Provide elite advice in Hinglish and end with these exact 'Save & Download Instructions' (in English):
+           *MANDATORY TIME & TOOL*: For each day, provide a realistic 'timeCommitment' (e.g., '1.5 hours', '2 hours') and a specific 'tool' to use (e.g., 'Notion', 'LinkedIn', 'ChatGPT').
+        3. resources: A curated "Master Reading List" (Top 5 books). For each book, provide the 'title' (just the book name) and 'description' (a substantive summary in Hinglish).
+        4. habitTracker: Specific "Power Habits" that clear mental fog and increase focus 10x (5 intense habits) in Hinglish.
+        5. expertAdvice: Provide a long, elite, life-changing piece of advice in Hinglish and end with these exact 'Save & Download Instructions' (in English):
            "📥 **Save Your Roadmap:** Since we prioritize your privacy, we do not store your data permanently.
            ✅ **Option 1:** Click 'Print' and select 'Save as PDF' to keep this offline.
            ✅ **Option 2:** Copy the entire text and paste it into your **Google Drive** or **Keep Notes** for lifelong access.
@@ -458,37 +458,85 @@ export default function App() {
     document.body.appendChild(loadingToast);
 
     // Wait for DOM to update and repaint before capturing
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     try {
-      // Capture the entire element at once for much faster generation
-      const dataUrl = await toJpeg(element, { 
-        quality: 0.8, 
-        backgroundColor: '#18181B',
-        pixelRatio: 1.5 
-      });
-
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      
-      const imgProps = pdf.getImageProperties(dataUrl);
-      const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      
-      let heightLeft = imgHeight;
-      let position = 0;
-      
-      // Add first page
-      pdf.addImage(dataUrl, 'JPEG', 0, position, pdfWidth, imgHeight);
-      heightLeft -= pageHeight;
-      
-      // Add subsequent pages if the image is taller than one page
-      while (heightLeft > 0) {
-        position -= pageHeight;
-        pdf.addPage();
-        pdf.addImage(dataUrl, 'JPEG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pageHeight;
+      const margin = 10;
+      let currentY = margin;
+
+      const setPdfBackground = () => {
+        pdf.setFillColor(24, 24, 27); // #18181B
+        pdf.rect(0, 0, pdfWidth, pageHeight, 'F');
+      };
+
+      setPdfBackground();
+      const originalAddPage = pdf.addPage.bind(pdf);
+      pdf.addPage = function() {
+        originalAddPage();
+        setPdfBackground();
+        return this;
+      };
+
+      const captureAndAdd = async (el: HTMLElement) => {
+        if (!el) return;
+        const dataUrl = await toJpeg(el, { 
+          quality: 0.95, 
+          backgroundColor: '#18181B', // Match card background
+          pixelRatio: 2 
+        });
+        const imgProps = pdf.getImageProperties(dataUrl);
+        const imgHeight = (imgProps.height * (pdfWidth - margin * 2)) / imgProps.width;
+
+        if (currentY + imgHeight > pageHeight - margin) {
+          pdf.addPage();
+          currentY = margin;
+        }
+
+        pdf.addImage(dataUrl, 'JPEG', margin, currentY, pdfWidth - margin * 2, imgHeight);
+        currentY += imgHeight + 5; // 5mm gap
+      };
+
+      // Capture sections
+      const header = document.getElementById('pdf-header');
+      if (header) await captureAndAdd(header);
+
+      const days = document.querySelectorAll('.roadmap-day-card');
+      if (days.length > 0) {
+        // Day 1 on first page
+        await captureAndAdd(days[0] as HTMLElement);
+        
+        // Force new page for Day 2 onwards
+        if (days.length > 1) {
+          pdf.addPage();
+          currentY = margin;
+        }
+
+        for (let i = 1; i < days.length; i++) {
+          await captureAndAdd(days[i] as HTMLElement);
+          
+          // Force new page after every 2 days (i=2, i=4, i=6...)
+          if (i % 2 === 0 && i !== days.length - 1) {
+            pdf.addPage();
+            currentY = margin;
+          }
+        }
       }
+
+      // Force new page for resources
+      pdf.addPage();
+      currentY = margin;
+
+      const resources = document.getElementById('pdf-resources');
+      if (resources) await captureAndAdd(resources);
+
+      const expert = document.getElementById('pdf-expert');
+      if (expert) await captureAndAdd(expert);
+
+      const footer = document.getElementById('pdf-footer');
+      if (footer) await captureAndAdd(footer);
 
       pdf.save(isAdminUnlock ? 'Admin_Pro_Roadmap.pdf' : 'My_Pro_Roadmap.pdf');
     } catch (err) {
@@ -549,10 +597,60 @@ export default function App() {
     setShowAppDownload(false);
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     if (!result) return;
-    const text = encodeURIComponent(result.shareText);
-    window.open(`https://wa.me/?text=${text}`, '_blank');
+    
+    // Create the message to share
+    const shareText = result.shareText || `Check out my Career Reality Check!\n\n${result.roast}\n\n`;
+    const shareUrl = window.location.origin;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Career Reality Check',
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch (err) {
+        // Fallback if sharing is aborted or fails
+        console.log('Error sharing:', err);
+      }
+    } else {
+      // Fallback for desktop/unsupported browsers: Copy to clipboard and alert
+      try {
+        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+        alert('Roast & Link copied to clipboard! You can now paste it anywhere.');
+      } catch (err) {
+        // Ultimate fallback: open WhatsApp web
+        const text = encodeURIComponent(`${shareText}\n${shareUrl}`);
+        window.open(`https://wa.me/?text=${text}`, '_blank');
+      }
+    }
+  };
+
+  const handleGlobalShare = async () => {
+    const shareText = "Get roasted for your habits, then get a serious roadmap to actually achieve your dreams! 🚀\nTry Career Reality Check now:\n";
+    const shareUrl = window.location.origin;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Career Reality Check',
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch (err) {
+        console.log('Error sharing:', err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+        alert('App Link copied to clipboard! You can now paste it anywhere.');
+      } catch (err) {
+        const text = encodeURIComponent(`${shareText}\n${shareUrl}`);
+        window.open(`https://wa.me/?text=${text}`, '_blank');
+      }
+    }
   };
 
   return (
@@ -586,6 +684,9 @@ export default function App() {
               <button onClick={() => { setResult(null); setActiveModal(null); }} className="text-white hover:text-[#39FF14] transition-colors">Home</button>
               <button onClick={() => setActiveModal('About Us')} className="text-zinc-400 hover:text-white transition-colors">About Us</button>
               <button onClick={() => setActiveModal('Contact Us')} className="text-zinc-400 hover:text-white transition-colors">Contact Us</button>
+              <button onClick={handleGlobalShare} className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors">
+                <Share2 className="w-4 h-4" /> Share App
+              </button>
               {user ? (
                 <button onClick={() => setShowProfile(true)} className="flex items-center gap-2 text-[#39FF14] hover:text-white transition-colors">
                   <User className="w-4 h-4" />
@@ -636,6 +737,9 @@ export default function App() {
                   <button onClick={() => { setResult(null); setActiveModal(null); setIsMobileMenuOpen(false); }} className="text-left text-white hover:text-[#39FF14] transition-colors">Home</button>
                   <button onClick={() => { setActiveModal('About Us'); setIsMobileMenuOpen(false); }} className="text-left text-zinc-400 hover:text-white transition-colors">About Us</button>
                   <button onClick={() => { setActiveModal('Contact Us'); setIsMobileMenuOpen(false); }} className="text-left text-zinc-400 hover:text-white transition-colors">Contact Us</button>
+                  <button onClick={() => { handleGlobalShare(); setIsMobileMenuOpen(false); }} className="text-left text-zinc-400 hover:text-white transition-colors flex items-center gap-2">
+                    <Share2 className="w-4 h-4" /> Share App
+                  </button>
                   {user ? (
                     <button onClick={() => { setShowProfile(true); setIsMobileMenuOpen(false); }} className="text-left text-[#39FF14] hover:text-white transition-colors flex items-center gap-2">
                       <User className="w-4 h-4" /> Profile
@@ -833,10 +937,10 @@ export default function App() {
                 
                 <button 
                   onClick={handleShare}
-                  className="mt-8 w-full md:w-auto inline-flex items-center justify-center gap-2 bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/30 hover:bg-[#25D366]/20 px-6 py-3 rounded-xl font-medium transition-colors"
+                  className="mt-8 w-full md:w-auto inline-flex items-center justify-center gap-2 bg-[#04D9FF]/10 text-[#04D9FF] border border-[#04D9FF]/30 hover:bg-[#04D9FF]/20 px-6 py-3 rounded-xl font-medium transition-colors"
                 >
                   <Share2 className="w-5 h-5" />
-                  Share Roast on WhatsApp
+                  Share Roast & Link
                 </button>
               </div>
 
@@ -877,7 +981,7 @@ export default function App() {
               {/* The Hook */}
               <div className="bg-gradient-to-br from-[#18181B] to-[#09090B] rounded-3xl p-8 border border-yellow-400/50 text-center relative overflow-hidden group">
                 <div className="absolute inset-0 bg-yellow-400/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                <Lock className="w-10 h-10 text-yellow-400 mx-auto mb-4 cursor-pointer relative z-10" onClick={handleSecretClick} />
+                <Lock className="w-10 h-10 text-yellow-400 mx-auto mb-4 relative z-10" />
                 <h3 className="text-2xl font-display font-bold text-white mb-2 relative z-10">Unlock the 30-Day Pro Roadmap</h3>
                 <p className="text-zinc-400 mb-8 relative z-10">Get the exact blueprint, curated resources, habit tracker, and expert advice to land your dream job.</p>
                 
@@ -897,10 +1001,18 @@ export default function App() {
                         Already Paid? Verify Here <Shield className="w-5 h-5" />
                       </button>
                     </div>
+
+                    {/* Subtle Admin Toggle */}
+                    <button 
+                      onClick={() => setShowAdminInput(prev => !prev)}
+                      className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors mt-2"
+                    >
+                      Admin Access
+                    </button>
                     
                     {/* Admin Panel */}
                     {showAdminInput && (
-                      <div className="mt-6 w-full p-6 border border-red-500/30 bg-red-500/5 rounded-2xl relative z-20">
+                      <div className="mt-2 w-full p-6 border border-red-500/30 bg-red-500/5 rounded-2xl relative z-20">
                         <h4 className="text-red-400 font-bold mb-4 flex items-center justify-center gap-2">
                           <Shield className="w-5 h-5" /> Admin Panel
                         </h4>
@@ -984,10 +1096,10 @@ export default function App() {
                 
                 <button 
                   onClick={handleShare}
-                  className="mt-8 w-full md:w-auto inline-flex items-center justify-center gap-2 bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/30 hover:bg-[#25D366]/20 px-6 py-3 rounded-xl font-medium transition-colors"
+                  className="mt-8 w-full md:w-auto inline-flex items-center justify-center gap-2 bg-[#04D9FF]/10 text-[#04D9FF] border border-[#04D9FF]/30 hover:bg-[#04D9FF]/20 px-6 py-3 rounded-xl font-medium transition-colors"
                 >
                   <Share2 className="w-5 h-5" />
-                  Share Roast on WhatsApp
+                  Share Roast & Link
                 </button>
               </div>
 
@@ -1548,31 +1660,36 @@ export default function App() {
             </div>
           )}
           {activeModal === 'Privacy Policy' && (
-            <div className="space-y-4 text-sm text-zinc-300">
-              <p><strong>Privacy Policy (As per DPDP Act 2023)</strong></p>
+            <div className="space-y-4 text-sm text-zinc-300 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+              <h3 className="text-xl font-bold text-white mb-4">Privacy Policy (As per IT Act 2000 & SPDI Rules 2011)</h3>
               <p>Effective Date: March 2026</p>
-              <p><strong>1. Data Collection:</strong> We only collect your Name and Career Goals strictly for the purpose of generating your personalized AI career roadmap.</p>
-              <p><strong>2. Security:</strong> Your data is processed securely via Google AI. We do not sell, rent, or share your personal data with third parties.</p>
-              <p><strong>3. Payments:</strong> All transactions are handled securely by Razorpay. We do not collect or store your bank account or credit/debit card details on our servers.</p>
-              <p><strong>4. Data Deletion Process:</strong> We delete your data immediately after the session ends as we do not permanently store user data. However, if you wish to formally request data deletion, please email us at zidpath@gmail.com with the subject "Data Deletion Request". We will ensure any residual records are removed within 7 working days.</p>
+              <p>We value your privacy and comply strictly with the Information Technology Act, 2000 and the Information Technology (Reasonable Security Practices and Procedures and Sensitive Personal Data or Information) Rules, 2011.</p>
+              <p><strong>1. Data Collection:</strong> We only collect Non-Sensitive Personal Data (Name, Career Goals, Social Media Screen Time) explicitly provided by you, strictly for generating your personalized AI career roadmap.</p>
+              <p><strong>2. Consent:</strong> By using our platform and submitting your details, you give us explicit algorithmic consent to process your inputs via Google AI solely for this one-time generation.</p>
+              <p><strong>3. Security & Storage:</strong> We do NOT permanently store your data on our servers. The inputs are processed instantly to generate the roadmap and then discarded. We do not sell, rent, or distribute your personal data.</p>
+              <p><strong>4. Payments:</strong> Financial transactions are processed securely under RBI guidelines by reliable payment gateways (e.g. Razorpay/PhonePe). We do not collect or store your Sensitive Personal Data like credit/debit card numbers or UPI PINs.</p>
+              <p><strong>5. Grievance Officer:</strong> Under Rule 11 of SPDI Rules, 2011, for any privacy complaints or data deletion requests, you may contact our Grievance Officer at: zidpath@gmail.com.</p>
             </div>
           )}
           {activeModal === 'Terms' && (
-            <div className="space-y-4 text-sm text-zinc-300">
-              <p><strong>Terms & Conditions</strong></p>
-              <p><strong>1. Service:</strong> Our application provides AI-based guidance and roadmaps for personal and career growth.</p>
-              <p><strong>2. Fee:</strong> The fee of ₹9 for the 30-Day Ultra Plan (Pro Version) is strictly Non-Refundable under any circumstances.</p>
-              <p><strong>3. Usage:</strong> Users must not use the AI or our services for any illegal, harmful, malicious, or unethical activities.</p>
-              <p><strong>4. Jurisdiction:</strong> These terms shall be governed by and construed in accordance with the laws of India. All disputes arising out of or in connection with these terms shall be subject to the exclusive jurisdiction of the courts of New Delhi, India.</p>
+            <div className="space-y-4 text-sm text-zinc-300 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+              <h3 className="text-xl font-bold text-white mb-4">Terms & Conditions</h3>
+              <p>These terms are an electronic record in terms of the Information Technology Act, 2000.</p>
+              <p><strong>1. Service & Scope:</strong> This application provides automated AI-based guidance and motivational roadmaps. The service is strictly for personal and educational purposes.</p>
+              <p><strong>2. Pricing & Non-Refundable Policy:</strong> As digital goods are processed and delivered instantly in real-time, the fee of ₹19 for the 30-Day Ultra Plan (Pro Version) is <strong>strictly Non-Refundable</strong> under any circumstances, compliant with the Consumer Protection (E-Commerce) Rules, 2020 exemptions for digital deliverables.</p>
+              <p><strong>3. User Conduct:</strong> You agree NOT to use the platform to transmit any unlawful, harassing, defamatory, obscene, or racially/ethnically objectionable material as per section 67 of the IT Act.</p>
+              <p><strong>4. Intellectual Property:</strong> The generated plans and roadmaps are for your individual use. The interface design, code, and logo are our intellectual property.</p>
+              <p><strong>5. Termination:</strong> We reserve the right to ban or block IP addresses found to be spamming, reverse-engineering, or misusing the AI endpoints.</p>
+              <p><strong>6. Governing Law & Jurisdiction:</strong> These terms shall be governed by and construed in accordance with the laws of India. All disputes shall be subject to the exclusive jurisdiction of the courts of New Delhi, India.</p>
             </div>
           )}
           {activeModal === 'Disclaimer' && (
-            <div className="space-y-4 text-sm text-zinc-300">
-              <p><strong>Disclaimer</strong></p>
-              <p><strong>1. No Guarantee:</strong> The roadmaps and advice generated by this AI are for general guidance and informational purposes only. This does not guarantee any specific job placement, career advancement, or financial success.</p>
-              <p><strong>2. "As-Is" Basis:</strong> The service is provided on an "as-is" basis. We are not responsible or liable for any AI hallucinations, inaccuracies, or technical errors in the generated content.</p>
-              <p><strong>3. User Responsibility:</strong> We do not provide permanent storage for your generated roadmaps. Users are strongly advised to select all, copy, and save their roadmaps to Google Drive or Keep Notes immediately after generation to ensure they do not lose access to the content.</p>
-              <p><strong>4. Content & Promotion Policy:</strong> We strictly adhere to Indian laws and regulations. We do not accept, promote, or endorse any form of explicit/obscene content (ashleel content), tobacco products (gutka/pan masala), or gambling/betting (satta/casino) platforms.</p>
+            <div className="space-y-4 text-sm text-zinc-300 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+              <h3 className="text-xl font-bold text-white mb-4">Disclaimer & Liability Limitation</h3>
+              <p><strong>1. No Professional Guarantee:</strong> The roadmaps, advice, and "roasts" generated by our AI are for entertainment, motivational, and general guidance purposes only. We are NOT registered financial advisors, career counselors, or certified therapists. We do NOT guarantee any specific job placement, income, or success.</p>
+              <p><strong>2. AI Limitations ("As-Is" Basis):</strong> The service relies on third-party LLMs (Large Language Models). It is provided on an "as-is" and "as-available" basis. We bear no liability for AI hallucinations, factual inaccuracies, or offensive text generated dynamically by the AI.</p>
+              <p><strong>3. Content Policy (Indian Law Alignment):</strong> We strictly adhere to Indian laws. We absolutely do not endorse, promote, or take responsibility for any third-party links, services, explicit content, tobacco products, gambling/betting (satta), or unregulated crypto applications.</p>
+              <p><strong>4. User Responsibility:</strong> Because we respect your privacy, your roadmap is NOT saved to a database. It is entirely your responsibility to Print, Save as PDF, or Copy-Paste your roadmap after paying. We are not liable for lost roadmaps once the page is refreshed or closed.</p>
             </div>
           )}
           {activeModal === 'FAQ' && (
