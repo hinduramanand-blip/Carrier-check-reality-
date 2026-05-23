@@ -150,7 +150,7 @@ export default function App() {
 
   const handleInitiatePayment = (e: React.MouseEvent) => {
     e.preventDefault();
-    const url = `https://razorpay.me/@carriercheckreality9?amount=${settings.price}`;
+    const url = settings.razorpayLink;
     
     // Try to open in new tab
     const newWin = window.open(url, '_blank');
@@ -847,7 +847,7 @@ export default function App() {
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full bg-[#09090B] border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#39FF14] focus:ring-1 focus:ring-[#39FF14] transition-all"
+                      className="w-full bg-[#09090B] border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white placeholder:text-zinc-500 focus:outline-none focus:border-[#39FF14] focus:ring-1 focus:ring-[#39FF14] transition-all"
                       placeholder="e.g. Ramanand"
                     />
                   </div>
@@ -1443,7 +1443,7 @@ export default function App() {
               {/* Column 1: Legal */}
               <div className="space-y-4">
                 <h4 className="text-white font-bold font-display tracking-wider uppercase text-sm">Legal</h4>
-                <div className="flex flex-col space-y-2 text-sm text-zinc-500">
+                <div className="flex flex-col space-y-2 text-sm text-zinc-300">
                   <button onClick={() => setActiveModal('Privacy Policy')} className="text-left w-fit hover:text-[#FF10F0] transition-colors">Privacy Policy</button>
                   <button onClick={() => setActiveModal('Terms')} className="text-left w-fit hover:text-[#FF10F0] transition-colors">Terms & Conditions</button>
                   <button onClick={() => setActiveModal('Disclaimer')} className="text-left w-fit hover:text-[#FF10F0] transition-colors">Disclaimer</button>
@@ -1453,7 +1453,7 @@ export default function App() {
               {/* Column 2: Contact & Support */}
               <div className="space-y-4">
                 <h4 className="text-white font-bold font-display tracking-wider uppercase text-sm">Contact & Support</h4>
-                <div className="flex flex-col space-y-2 text-sm text-zinc-500">
+                <div className="flex flex-col space-y-2 text-sm text-zinc-300">
                   <a href="mailto:zidpath@gmail.com" className="text-left w-fit flex items-center gap-2 hover:text-[#39FF14] text-white font-bold transition-colors mb-2">
                     <Mail className="w-4 h-4" /> zidpath@gmail.com
                   </a>
@@ -1467,7 +1467,7 @@ export default function App() {
               {/* Column 3: Contact */}
               <div className="space-y-4">
                 <h4 className="text-white font-bold font-display tracking-wider uppercase text-sm">Socials</h4>
-                <div className="flex items-center gap-4 text-zinc-500">
+                <div className="flex items-center gap-4 text-zinc-300">
                   <a href={settings.twitterUrl || "#"} target="_blank" rel="noreferrer" className="hover:text-[#04D9FF] transition-colors"><Twitter className="w-5 h-5" /></a>
                   <a href={settings.instagramUrl || "#"} target="_blank" rel="noreferrer" className="hover:text-[#FF10F0] transition-colors"><Instagram className="w-5 h-5" /></a>
                   <a href={settings.youtubeUrl || "#"} target="_blank" rel="noreferrer" className="hover:text-red-500 transition-colors"><Youtube className="w-5 h-5" /></a>
@@ -1476,7 +1476,7 @@ export default function App() {
             </div>
 
             <div className="border-t border-white/5 pt-6 flex flex-col items-center justify-center gap-4">
-              <p className="text-xs text-zinc-600 font-medium tracking-wide">
+              <p className="text-xs text-zinc-400 font-medium tracking-wide">
                 © 2026 Career Reality Check | All Rights Reserved.
               </p>
               <p className="text-xs text-[#39FF14] font-medium tracking-wide mt-2 uppercase">
@@ -1588,7 +1588,7 @@ export default function App() {
             </button>
           </div>
           
-          <p className="text-xs text-zinc-500 mt-4">
+          <p className="text-xs text-zinc-300 mt-4">
             Install this web app directly to your device's home screen for the best experience.
           </p>
         </div>
@@ -1694,9 +1694,12 @@ export default function App() {
           <div className="flex flex-col gap-3 mt-6">
             <button 
               onClick={handleInitiatePayment}
-              className="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2 text-lg"
+              className="w-full bg-yellow-400 text-black font-bold py-4 rounded-xl hover:bg-yellow-500 transition-colors flex flex-col items-center justify-center gap-1 text-lg"
             >
-              Pay ₹{settings.price} to Unlock <ArrowRight className="w-5 h-5" />
+              <div className="flex items-center gap-2">
+                Pay ₹{settings.price} to Unlock <ArrowRight className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-medium opacity-80 uppercase tracking-widest">Accepts UPI (GPay, PhonePe, Paytm), Cards & More</span>
             </button>
             <button 
               onClick={() => {
@@ -1814,36 +1817,125 @@ export default function App() {
             </div>
           )}
           {activeModal === 'Privacy Policy' && (
-            <div className="space-y-4 text-sm text-zinc-300 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-              <h3 className="text-xl font-bold text-white mb-4">Privacy Policy (As per IT Act 2000 & SPDI Rules 2011)</h3>
-              <p>Effective Date: March 2026</p>
-              <p>We value your privacy and comply strictly with the Information Technology Act, 2000 and the Information Technology (Reasonable Security Practices and Procedures and Sensitive Personal Data or Information) Rules, 2011.</p>
-              <p><strong>1. Data Collection:</strong> We only collect Non-Sensitive Personal Data (Name, Career Goals, Social Media Screen Time) explicitly provided by you, strictly for generating your personalized AI career roadmap.</p>
-              <p><strong>2. Consent:</strong> By using our platform and submitting your details, you give us explicit algorithmic consent to process your inputs via Google AI solely for this one-time generation.</p>
-              <p><strong>3. Security & Storage:</strong> We do NOT permanently store your data on our servers. The inputs are processed instantly to generate the roadmap and then discarded. We do not sell, rent, or distribute your personal data.</p>
-              <p><strong>4. Payments:</strong> Financial transactions are processed securely under RBI guidelines by reliable payment gateways (e.g. Razorpay/PhonePe). We do not collect or store your Sensitive Personal Data like credit/debit card numbers or UPI PINs.</p>
-              <p><strong>5. Grievance Officer:</strong> Under Rule 11 of SPDI Rules, 2011, for any privacy complaints or data deletion requests, you may contact our Grievance Officer at: zidpath@gmail.com.</p>
+            <div className="space-y-6 text-sm text-zinc-300 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar">
+              <div>
+                <h3 className="text-xl font-bold text-[#39FF14] mb-2">PRIVACY POLICY (प्राइवेसी पॉलिसी)</h3>
+                <p className="text-xs text-zinc-300 mb-6">Last Updated: May 23, 2026 | Jurisdiction: Republic of India</p>
+                
+                <p className="mb-4">Career Check Reality ("हम", "हमारी", "App", "Website") में आपका स्वागत है। हम अपने यूज़र्स ("आप", "आपके", "User") की प्राइवेसी और डेटा सुरक्षा का पूरा सम्मान करते हैं। यह प्राइवेसी पॉलिसी भारत के Information Technology (IT) Act, 2000 और Digital Personal Data Protection (DPDP) Act, 2023 के नियमों के तहत बनाई गई है। यह डॉक्युमेंट आपको बताता है कि जब आप हमारी वेबसाइट का उपयोग करते हैं, तो हम किस प्रकार की जानकारी एकत्र करते हैं और उसका उपयोग कैसे करते हैं।</p>
+                
+                <div className="bg-[#18181B] border border-white/10 p-4 rounded-xl mb-6">
+                  <p className="font-bold text-white mb-1">महत्वपूर्ण सूचना:</p>
+                  <p>हम आपका कोई भी पर्सनल सेंसिटिव डेटा (जैसे आधार, बैंक पासवर्ड, बायोमेट्रिक्स) स्टोर या एकत्र नहीं करते हैं। हमारी वेबसाइट पर दिया गया इनपुट पूरी तरह से करियर रोस्टिंग और फन के उद्देश्य से लिया जाता है।</p>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-lg font-bold text-white">1. एकत्र की जाने वाली जानकारी (Information We Collect)</h4>
+                  <p>जब आप हमारी वेबसाइट पर करियर रियलिटी चेक या रोस्ट जनरेट करते हैं, तो हम आपसे केवल निम्नलिखित बुनियादी इनपुट लेते हैं:</p>
+                  <ul className="list-disc pl-5 space-y-2">
+                    <li><strong className="text-white">यूज़र इनपुट:</strong> आपका नाम, आपका वर्तमान प्रोफेशन/पढ़ाई (जैसे B.Tech, UPSC, Commerce), और आपका दैनिक मोबाइल स्क्रीन टाइम (Daily Screen Time)।</li>
+                    <li><strong className="text-white">लॉग डेटा और एनालिटिक्स:</strong> हम आपकी सुरक्षा और वेबसाइट के परफॉर्मेंस को बेहतर बनाने के लिए बुनियादी डेटा जैसे IP एड्रेस, ब्राउज़र का प्रकार (Browser Type), और विज़िट का समय एकत्र कर सकते हैं।</li>
+                    <li><strong className="text-white">भुगतान की जानकारी (Payment Data):</strong> जब आप हमारे प्रो रोडमैप (₹19) के लिए भुगतान करते हैं, तो सभी ट्रांजैक्शन्स हमारे सिक्योर पेमेंट गेटवे पार्टनर (Razorpay) के माध्यम से सुरक्षित रूप से प्रोसेस किए जाते हैं। हम अपने सर्वर पर आपके क्रेडिट/डेबिट कार्ड या नेट बैंकिंग के क्रेडेंशियल्स सेव नहीं करते हैं।</li>
+                  </ul>
+                </div>
+
+                <div className="space-y-4 mt-6">
+                  <h4 className="text-lg font-bold text-white">2. जानकारी का उपयोग (How We Use Your Information)</h4>
+                  <p>हम एकत्र की गई जानकारी का उपयोग निम्नलिखित उद्देश्यों के लिए करते हैं:</p>
+                  <ul className="list-disc pl-5 space-y-2">
+                    <li>Google AI Studio (Gemini API) के माध्यम से आपके इनपुट के आधार पर कस्टमाइज़्ड और मज़ेदार करियर रोस्ट रिस्पॉन्स जनरेट करने के लिए।</li>
+                    <li>₹19 का प्रो करियर रोडमैप जनरेट करने और उसे डाउनलोड करने की सुविधा देने के लिए।</li>
+                    <li>वेबसाइट के ट्रैफिक, टोटल विज़िट्स और कन्वर्ज़न रेट को ऐडमिन पैनल के ज़रिए ट्रैक और एनालाइज़ करने के लिए।</li>
+                    <li>भविष्य में Google AdSense विज्ञापन दिखाने और Amazon Affiliate बुक रिकमेंडेशन्स को ऑप्टिमाइज़ करने के लिए।</li>
+                  </ul>
+                </div>
+
+                <div className="space-y-4 mt-6">
+                  <h4 className="text-lg font-bold text-white">3. डेटा शेयरिंग और थर्ड-पार्टी सर्विसेस (Data Sharing & Third-Party Services)</h4>
+                  <p>हम आपका डेटा किसी भी अनधिकृत तीसरे पक्ष (Third Party) को नहीं बेचते हैं। बेहतर सर्विस देने के लिए हम केवल निम्नलिखित विश्वसनीय थर्ड-पार्टी एपीआई (APIs) और सर्विसेस का उपयोग करते हैं:</p>
+                  <ul className="list-disc pl-5 space-y-2">
+                    <li><strong className="text-white">Google AI Studio (Gemini API):</strong> आपके करियर इनपुट को प्रोसेस करके रोस्ट और एनालिसिस जनरेट करने के लिए।</li>
+                    <li><strong className="text-white">Razorpay:</strong> आपके पेमेंट्स को 100% सुरक्षित और एन्क्रिप्टेड तरीके से प्रोसेस करने के लिए।</li>
+                    <li><strong className="text-white">Hosting Partners (GitHub/Vercel/Render):</strong> हमारी वेबसाइट फ़ाइलों और डेटाबेस को सुरक्षित रूप से होस्ट करने के लिए।</li>
+                  </ul>
+                </div>
+
+                <div className="space-y-4 mt-6">
+                  <h4 className="text-lg font-bold text-white">4. डेटा सुरक्षा (Data Security)</h4>
+                  <p>हम आपके डेटा को सुरक्षित रखने के लिए कमर्शियली एक्सेप्टेबल सुरक्षा उपायों का उपयोग करते हैं। वेबसाइट पर सभी डेटा ट्रांसफर SSL (HTTPS) एन्क्रिप्शन के माध्यम से सुरक्षित होते हैं। हालाँकि, इंटरनेट पर 100% सुरक्षा की गारंटी कोई नहीं दे सकता, इसलिए हम यूज़र्स को सलाह देते हैं कि वे कोई भी गोपनीय या पर्सनल सेंसिटिव जानकारी इनपुट बॉक्स में न डालें।</p>
+                </div>
+              </div>
             </div>
           )}
           {activeModal === 'Terms' && (
-            <div className="space-y-4 text-sm text-zinc-300 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-              <h3 className="text-xl font-bold text-white mb-4">Terms & Conditions</h3>
-              <p>These terms are an electronic record in terms of the Information Technology Act, 2000.</p>
-              <p><strong>1. Service & Scope:</strong> This application provides automated AI-based guidance and motivational roadmaps. The service is strictly for personal and educational purposes.</p>
-              <p><strong>2. Pricing & Non-Refundable Policy:</strong> As digital goods are processed and delivered instantly in real-time, the fee of ₹19 for the 30-Day Ultra Plan (Pro Version) is <strong>strictly Non-Refundable</strong> under any circumstances, compliant with the Consumer Protection (E-Commerce) Rules, 2020 exemptions for digital deliverables.</p>
-              <p><strong>3. User Conduct:</strong> You agree NOT to use the platform to transmit any unlawful, harassing, defamatory, obscene, or racially/ethnically objectionable material as per section 67 of the IT Act.</p>
-              <p><strong>4. Intellectual Property:</strong> The generated plans and roadmaps are for your individual use. The interface design, code, and logo are our intellectual property.</p>
-              <p><strong>5. Termination:</strong> We reserve the right to ban or block IP addresses found to be spamming, reverse-engineering, or misusing the AI endpoints.</p>
-              <p><strong>6. Governing Law & Jurisdiction:</strong> These terms shall be governed by and construed in accordance with the laws of India. All disputes shall be subject to the exclusive jurisdiction of the courts of New Delhi, India.</p>
+            <div className="space-y-6 text-sm text-zinc-300 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar">
+              <div>
+                <h3 className="text-xl font-bold text-[#39FF14] mb-2">TERMS & CONDITIONS (नियम एवं शर्तें)</h3>
+                <p className="text-xs text-zinc-300 mb-6">Last Updated: May 23, 2026 | Jurisdiction: Republic of India</p>
+
+                <p className="mb-6">Career Check Reality वेबसाइट का उपयोग करने से पहले कृपया इन नियमों और शर्तों (Terms & Conditions) को ध्यान से पढ़ें। इस वेबसाइट को एक्सेस या उपयोग करके, आप इन शर्तों और भारत के सभी लागू कानूनों का पालन करने के लिए बाध्य होने की सहमति देते हैं। यदि आप इन शर्तों से असहमत हैं, तो कृपया इस वेबसाइट का उपयोग न करें।</p>
+
+                <div className="space-y-4">
+                  <h4 className="text-lg font-bold text-white">1. सेवा का उद्देश्य और उपयोग की पात्रता (Eligibility & Purpose)</h4>
+                  <ul className="list-disc pl-5 space-y-2">
+                    <li>यह वेबसाइट केवल मनोरंजन (Entertainment), करियर अवेयरनेस और मोटिवेशनल उद्देश्यों के लिए बनाई गई है।</li>
+                    <li>वेबसाइट का "Savage Roast Mode" एआई-जनरेटेड व्यंग्य और हास्य (Satire & Humor) पर आधारित है। इसे किसी भी प्रकार का व्यक्तिगत अपमान, मानसिक उत्पीड़न या वास्तविक करियर सलाह नहीं माना जाना चाहिए।</li>
+                    <li>इस वेबसाइट का उपयोग करने के लिए यूज़र की आयु कम से कम 13 वर्ष होनी चाहिए।</li>
+                  </ul>
+                </div>
+
+                <div className="space-y-4 mt-6">
+                  <h4 className="text-lg font-bold text-white">2. पेमेंट्स और रिफंड पॉलिसी (Payments & Refund Policy)</h4>
+                  <ul className="list-disc pl-5 space-y-2">
+                    <li>वेबसाइट पर "Pro Roadmap" सर्विस के लिए ₹19 का एकमुश्त (One-time) शुल्क लिया जाता है।</li>
+                    <li>चूंकि रोडमैप एक डिजिटल प्रोडक्ट/सर्विस है जो भुगतान के तुरंत बाद जनरेट हो जाती है, इसलिए भारतीय कानून के डिजिटल गुड्स नियमों के तहत <strong className="text-white">यह राशि पूरी तरह से नॉन-रिफंडेबल (Non-Refundable) है</strong>।</li>
+                    <li>यदि पेमेंट कटने के बाद किसी तकनीकी खराबी के कारण आपका रोडमैप डाउनलोड नहीं होता है, तो आप ऐडमिन से संपर्क कर सकते हैं, वेरिफिकेशन के बाद आपको रोडमैप ईमेल कर दिया जाएगा।</li>
+                  </ul>
+                </div>
+
+                <div className="space-y-4 mt-6">
+                  <h4 className="text-lg font-bold text-white">3. बौद्धिक संपदा अधिकार (Intellectual Property Rights)</h4>
+                  <p>इस वेबसाइट पर उपलब्ध सभी कंटेंट, डिज़ाइन, कोड, लोगो, और यूज़र इंटरफ़ेस (UI) "Career Check Reality" की अनन्य संपत्ति हैं। आप ऐडमिन की लिखित अनुमति के बिना हमारी वेबसाइट के कोड, लेआउट या ब्रांडिंग को कॉपी, मॉडिफाई या री-डिस्ट्रीब्यूट नहीं कर सकते। हालाँकि, यूज़र्स को अपने खुद के जनरेटेड रोस्ट स्क्रीनशॉट सोशल मीडिया (Instagram Reels, YouTube Shorts, WhatsApp) पर शेयर करने की पूरी अनुमति है।</p>
+                </div>
+
+                <div className="space-y-4 mt-6">
+                  <h4 className="text-lg font-bold text-white">4. कानूनी अधिकार क्षेत्र (Jurisdiction)</h4>
+                  <p>इन शर्तों से उत्पन्न होने वाले किसी भी प्रकार के कानूनी विवाद या दावों का निपटारा केवल भारत के कानूनों के तहत होगा और इसके लिए विशेष अधिकार क्षेत्र स्थानीय भारतीय अदालतें (Courts of India) होंगी।</p>
+                </div>
+              </div>
             </div>
           )}
           {activeModal === 'Disclaimer' && (
-            <div className="space-y-4 text-sm text-zinc-300 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-              <h3 className="text-xl font-bold text-white mb-4">Disclaimer & Liability Limitation</h3>
-              <p><strong>1. No Professional Guarantee:</strong> The roadmaps, advice, and "roasts" generated by our AI are for entertainment, motivational, and general guidance purposes only. We are NOT registered financial advisors, career counselors, or certified therapists. We do NOT guarantee any specific job placement, income, or success.</p>
-              <p><strong>2. AI Limitations ("As-Is" Basis):</strong> The service relies on third-party LLMs (Large Language Models). It is provided on an "as-is" and "as-available" basis. We bear no liability for AI hallucinations, factual inaccuracies, or offensive text generated dynamically by the AI.</p>
-              <p><strong>3. Content Policy (Indian Law Alignment):</strong> We strictly adhere to Indian laws. We absolutely do not endorse, promote, or take responsibility for any third-party links, services, explicit content, tobacco products, gambling/betting (satta), or unregulated crypto applications.</p>
-              <p><strong>4. User Responsibility:</strong> Because we respect your privacy, your roadmap is NOT saved to a database. It is entirely your responsibility to Print, Save as PDF, or Copy-Paste your roadmap after paying. We are not liable for lost roadmaps once the page is refreshed or closed.</p>
+            <div className="space-y-6 text-sm text-zinc-300 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar">
+              <div>
+                <h3 className="text-xl font-bold text-[#39FF14] mb-2">LEGAL DISCLAIMER (अस्वीकरण)</h3>
+                <p className="text-xs text-zinc-300 mb-6">Last Updated: May 23, 2026 | Jurisdiction: Republic of India</p>
+
+                <div className="bg-[#18181B] border border-white/10 p-4 rounded-xl mb-6">
+                  <p className="font-bold text-white mb-1">कृपया ध्यान दें:</p>
+                  <p>इस वेबसाइट का उपयोग करने से पहले इस कानूनी अस्वीकरण को पढ़ना अनिवार्य है।</p>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-lg font-bold text-white">1. केवल मनोरंजन के लिए (For Entertainment Purposes Only)</h4>
+                  <p>Career Check Reality द्वारा जनरेट किया गया "Savage Roast" पूरी तरह से आर्टिफिशियल इंटेलिजेंस (Google Gemini AI) द्वारा बनाया गया एक काल्पनिक और हास्यप्रद (Humorous) रिस्पॉन्स है। इसका उद्देश्य केवल मनोरंजन और यूज़र्स को एक मज़ेदार तरीके से मोबाइल स्क्रीन टाइम के प्रति सचेत करना है। हम किसी भी व्यक्ति, जाति, धर्म, प्रोफेशन या कम्युनिटी की भावनाओं को ठेस पहुँचाने का इरादा नहीं रखते हैं।</p>
+                </div>
+
+                <div className="space-y-4 mt-6">
+                  <h4 className="text-lg font-bold text-white">2. कोई व्यावसायिक करियर सलाह नहीं (No Professional Career Advice)</h4>
+                  <p>इस वेबसाइट पर मिलने वाला 'रोस्ट' या 'करियर सर्वाइवल स्कोर' कोई वास्तविक करियर प्रेडिक्शन या प्रोफेशनल गाइडेंस नहीं है। यूज़र को अपने करियर, कॉलेज, जॉब या पढ़ाई से जुड़े महत्वपूर्ण फैसले अपने व्यक्तिगत विवेक, रिसर्च और योग्य करियर काउंसलर्स की सलाह के आधार पर लेने चाहिए। इस वेबसाइट पर दिए गए कंटेंट के आधार पर लिए गए किसी भी जीवन या करियर के फैसले के नुकसान या लाभ के ज़िम्मेदार यूज़र स्वयं होंगे।</p>
+                </div>
+
+                <div className="space-y-4 mt-6">
+                  <h4 className="text-lg font-bold text-white">3. एआई त्रुटियां और सटीकता की सीमा (AI Errors & Limitation of Liability)</h4>
+                  <p>चूंकि रिस्पॉन्स एआई मॉडल (Generative AI) द्वारा रियल-टाइम में जनरेट किए जाते हैं, इसलिए इनमें तकनीकी त्रुटियां (Hallucinations) या गलत तथ्य हो सकते हैं। हम एआई द्वारा जनरेट की गई किसी भी जानकारी की 100% सटीकता, विश्वसनीयता या पूर्णता की गारंटी नहीं देते हैं। "Career Check Reality" या इसके डेवलपर्स/ऐडमिन किसी भी यूज़र को होने वाले किसी भी प्रकार के मानसिक, वित्तीय या प्रत्यक्ष/अप्रत्यक्ष नुकसान के लिए कानूनी रूप से उत्तरदायी (Liable) नहीं होंगे।</p>
+                </div>
+
+                <div className="space-y-4 mt-6">
+                  <h4 className="text-lg font-bold text-white">4. एफिलिएट और विज्ञापनों का प्रकटीकरण (Affiliate & Ads Disclosure)</h4>
+                  <p>यह वेबसाइट अपने खर्चों और मेंटेनेंस को चलाने के लिए मुद्रीकरण (Monetization) का उपयोग करती है। वेबसाइट पर दिखाए जाने वाले Google AdSense के विज्ञापन और रोडमैप में रिकमेंड की गई किताबों के Amazon Affiliate लिंक्स से डेवलपर को एक छोटा कमीशन प्राप्त हो सकता है। यूज़र किसी भी थर्ड-पार्टी लिंक पर क्लिक करने या अमेज़न से सामान खरीदने से पहले उनकी अपनी प्राइवेसी पॉलिसी और शर्तों को ज़रूर जांच लें。</p>
+                </div>
+              </div>
             </div>
           )}
           {activeModal === 'FAQ' && (

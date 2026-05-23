@@ -26,7 +26,7 @@ export const jobCategories = [
   {
     category: "Engineering (Core)",
     jobs: [
-      "Mechanical Engineer", "Civil Engineer", "Electrical Engineer", "Aerospace Engineer",
+      "Mechanical Engineer", "Civil Engineer", "Electrical Engineer", "Electronics and Telecommunication Engineering", "Aerospace Engineer",
       "Chemical Engineer", "Biomedical Engineer", "Environmental Engineer", "Industrial Engineer",
       "Structural Engineer", "Automotive Engineer", "Marine Engineer", "Petroleum Engineer",
       "Materials Engineer", "Robotics Engineer", "Mechatronics Engineer", "Manufacturing Engineer",
