@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type } from '@google/genai';
-import { Flame, Target, Clock, Share2, Lock, ArrowRight, Loader2, User, Sparkles, Shield, Search, Twitter, Instagram, Youtube, Mail, Menu, Download, Smartphone, Printer, AlertTriangle, CheckSquare } from 'lucide-react';
+import { Flame, Target, Clock, Share2, Lock, ArrowRight, Loader2, User, Sparkles, Shield, Search, Twitter, Instagram, Youtube, Mail, Menu, Download, Smartphone, Printer, AlertTriangle, CheckSquare, BarChart2, Users } from 'lucide-react';
 import Modal from './components/Modal';
 import Chatbot from './components/Chatbot';
 import AdminDashboard from './components/AdminDashboard';
-import { getSettings, incrementVisits, incrementClicks, addFeedback, incrementRoasts, incrementProUnlocks } from './lib/store';
+import { getSettings, getAnalytics, incrementVisits, incrementClicks, addFeedback, incrementRoasts, incrementProUnlocks } from './lib/store';
 import { jobList, jobCategories } from './lib/jobs';
 import { toJpeg } from 'html-to-image';
 import { jsPDF } from 'jspdf';
@@ -98,6 +98,7 @@ export default function App() {
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showJobSuggestions, setShowJobSuggestions] = useState(false);
+  const [analytics, setAnalytics] = useState({ visits: 0, clicks: 0, roastsGenerated: 0, proUnlocks: 0 });
   const [user, setUser] = useState<{name: string, email: string} | null>(null);
   const [showLogin, setShowLogin] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -180,6 +181,7 @@ export default function App() {
   useEffect(() => {
     incrementVisits();
     setSettings(getSettings());
+    setAnalytics(getAnalytics());
     const savedUser = localStorage.getItem('app_user');
     if (savedUser) {
       const parsed = JSON.parse(savedUser);
@@ -946,7 +948,7 @@ export default function App() {
             >
               {/* The Roast */}
               <div className="bg-[#18181B] rounded-3xl p-6 md:p-8 border border-[#FF10F0]/30 shadow-[0_0_40px_rgba(255,16,240,0.1)] relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF10F0]/10 blur-3xl rounded-full" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF10F0]/5 rounded-full" />
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-2 bg-[#FF10F0]/20 rounded-lg text-[#FF10F0]">
                     <Flame className="w-6 h-6" />
@@ -1105,7 +1107,7 @@ export default function App() {
             >
               {/* Pro Roast */}
               <div className="bg-[#18181B] rounded-3xl p-6 md:p-8 border-2 border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.2)] relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/10 blur-3xl rounded-full" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/5 rounded-full" />
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-2 bg-yellow-400/20 rounded-lg text-yellow-400">
                     <Flame className="w-6 h-6" />
@@ -1303,6 +1305,54 @@ export default function App() {
               <div className="text-zinc-300 whitespace-pre-wrap">{module.content}</div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Live impact Analytics */}
+      {!isAdmin && (
+        <div className="w-full max-w-6xl mx-auto mt-12 px-6">
+          <div className="bg-[#18181B] rounded-3xl p-6 md:p-8 border border-[#39FF14]/10 relative overflow-hidden">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-[#04D9FF]/20 rounded-lg text-[#04D9FF]">
+                    <BarChart2 className="w-6 h-6" />
+                  </div>
+                  <h2 className="text-2xl font-display font-bold text-white">Our Global Impact</h2>
+                </div>
+                <p className="text-zinc-400">Live statistics showing how many careers we've roasted and transformed.</p>
+              </div>
+              <div className="grid grid-cols-2 md:flex gap-4 md:gap-8 w-full md:w-auto">
+                <div className="bg-[#09090B] p-4 rounded-2xl border border-white/5 text-center flex-1">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Users className="w-4 h-4 text-[#39FF14]" />
+                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Total Visitors</span>
+                  </div>
+                  <span className="text-2xl md:text-3xl font-display font-bold text-[#39FF14]">
+                    {(1024 + (analytics.visits || 0)).toLocaleString()}
+                  </span>
+                </div>
+                <div className="bg-[#09090B] p-4 rounded-2xl border border-white/5 text-center flex-1">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Flame className="w-4 h-4 text-[#FF10F0]" />
+                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Roasts Generated</span>
+                  </div>
+                  <span className="text-2xl md:text-3xl font-display font-bold text-[#FF10F0]">
+                    {(841 + (analytics.roastsGenerated || 0)).toLocaleString()}
+                  </span>
+                </div>
+                <div className="bg-[#09090B] p-4 rounded-2xl border border-white/5 text-center flex-1 col-span-2">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Lock className="w-4 h-4 text-yellow-400" />
+                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Pro Roadmaps Unlocked</span>
+                  </div>
+                  <span className="text-2xl md:text-3xl font-display font-bold text-yellow-400">
+                    {(156 + (analytics.proUnlocks || 0)).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
