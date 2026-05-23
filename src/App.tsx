@@ -99,7 +99,7 @@ export default function App() {
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showJobSuggestions, setShowJobSuggestions] = useState(false);
-  const [analytics, setAnalytics] = useState({ visits: 0, clicks: 0, roastsGenerated: 0, proUnlocks: 0 });
+  const [analytics, setAnalytics] = useState({ visits: 0, clicks: 0, roastsGenerated: 0, proUnlocks: 0, dailyViews: {} as Record<string, number> });
   const [user, setUser] = useState<{name: string, email: string} | null>(null);
   const [showLogin, setShowLogin] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -248,7 +248,7 @@ export default function App() {
       const response = await generateWithRetry(
         'gemini-3-flash-preview',
         `Generate a 'Career Reality Check' for ${name}.
-        Their dream goal/job is: ${dreamJob}. (This could be a job, business, or any other goal).
+        Their dream goal/job/degree/exam is: ${dreamJob}. (This could be a job, business, college degree like B.Tech/BCA, or competitive exam preparation like UPSC/NEET/JEE).
         They spend ${socialMediaHours} hours on social media daily.
         
         IMPORTANT: The entire response (roast, roadmap, pro tip, summary) MUST be in a bilingual format (Hindi + English / Hinglish) so it's easily understood by everyone. Provide the absolute BEST advice tailored to their specific goal, whether it's a job, a business, or anything else.
@@ -314,7 +314,7 @@ export default function App() {
       const response = await generateWithRetry(
         'gemini-3-flash-preview',
         `Act as an Elite Success Mentor. Generate a 30-day "Transformation Journey" for ${name}.
-        Their dream goal/job is: ${dreamJob}. (This could be a job, business, or any other goal).
+        Their dream goal/job/degree/exam is: ${dreamJob}. (This could be a job, business, college degree like B.Tech/BCA, or competitive exam preparation like UPSC/NEET/JEE).
         They spend ${socialMediaHours} hours on social media daily.
         
         Tone: Professional, motivating, extremely detailed and highly actionable. Ensure the value is so high that they feel their ₹19 was the best investment ever. Make it a complete, personalized dossier (poora chitta) of their path so they feel they received a premium, exhaustive blueprint. The plan should be substantially large, comprehensive, and impactful.
@@ -821,7 +821,7 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-zinc-400 mb-2 uppercase tracking-wider">Dream Job</label>
+                  <label className="block text-sm font-medium text-zinc-400 mb-2 uppercase tracking-wider">Dream Goal / Exam / Job</label>
                   <div className="relative">
                     <Target className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
                     <input 
@@ -835,7 +835,7 @@ export default function App() {
                       onFocus={() => setShowJobSuggestions(true)}
                       onBlur={() => setTimeout(() => setShowJobSuggestions(false), 200)}
                       className="w-full bg-[#09090B] border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#04D9FF] focus:ring-1 focus:ring-[#04D9FF] transition-all"
-                      placeholder="e.g. Senior Software Engineer"
+                      placeholder="e.g. UPSC / B.Tech / Software Engineer"
                     />
                     {showJobSuggestions && (
                       <ul className="absolute z-50 w-full bg-[#18181B] border border-white/10 rounded-xl mt-1 max-h-72 overflow-y-auto shadow-2xl scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
@@ -1314,43 +1314,87 @@ export default function App() {
       {!isAdmin && (
         <div className="w-full max-w-6xl mx-auto mt-12 px-6">
           <div className="bg-[#18181B] rounded-3xl p-6 md:p-8 border border-[#39FF14]/10 relative overflow-hidden">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
-              <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-[#04D9FF]/20 rounded-lg text-[#04D9FF]">
-                    <BarChart2 className="w-6 h-6" />
+            <div className="flex flex-col lg:flex-row gap-8 relative z-10">
+              {/* Stats Column */}
+              <div className="w-full lg:w-1/3 flex flex-col justify-center space-y-8">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-[#04D9FF]/20 rounded-lg text-[#04D9FF]">
+                      <BarChart2 className="w-6 h-6" />
+                    </div>
+                    <h2 className="text-2xl font-display font-bold text-white">Our Global Impact</h2>
                   </div>
-                  <h2 className="text-2xl font-display font-bold text-white">Our Global Impact</h2>
+                  <p className="text-zinc-400">Live statistics showing how many careers we've roasted and transformed.</p>
                 </div>
-                <p className="text-zinc-400">Live statistics showing how many careers we've roasted and transformed.</p>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="bg-[#09090B] p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-[#39FF14]/10 rounded-lg"><Users className="w-5 h-5 text-[#39FF14]" /></div>
+                      <span className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Total Visitors</span>
+                    </div>
+                    <span className="text-2xl font-display font-bold text-[#39FF14]">
+                      {(1024 + (analytics.visits || 0)).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="bg-[#09090B] p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-[#FF10F0]/10 rounded-lg"><Flame className="w-5 h-5 text-[#FF10F0]" /></div>
+                      <span className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Roasts Generated</span>
+                    </div>
+                    <span className="text-2xl font-display font-bold text-[#FF10F0]">
+                      {(841 + (analytics.roastsGenerated || 0)).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="bg-[#09090B] p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-yellow-400/10 rounded-lg"><Lock className="w-5 h-5 text-yellow-400" /></div>
+                      <span className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Pro Roadmaps Unlocked</span>
+                    </div>
+                    <span className="text-2xl font-display font-bold text-yellow-400">
+                      {(156 + (analytics.proUnlocks || 0)).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-2 md:flex gap-4 md:gap-8 w-full md:w-auto">
-                <div className="bg-[#09090B] p-4 rounded-2xl border border-white/5 text-center flex-1">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <Users className="w-4 h-4 text-[#39FF14]" />
-                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Total Visitors</span>
-                  </div>
-                  <span className="text-2xl md:text-3xl font-display font-bold text-[#39FF14]">
-                    {(1024 + (analytics.visits || 0)).toLocaleString()}
-                  </span>
-                </div>
-                <div className="bg-[#09090B] p-4 rounded-2xl border border-white/5 text-center flex-1">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <Flame className="w-4 h-4 text-[#FF10F0]" />
-                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Roasts Generated</span>
-                  </div>
-                  <span className="text-2xl md:text-3xl font-display font-bold text-[#FF10F0]">
-                    {(841 + (analytics.roastsGenerated || 0)).toLocaleString()}
-                  </span>
-                </div>
-                <div className="bg-[#09090B] p-4 rounded-2xl border border-white/5 text-center flex-1 col-span-2">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <Lock className="w-4 h-4 text-yellow-400" />
-                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Pro Roadmaps Unlocked</span>
-                  </div>
-                  <span className="text-2xl md:text-3xl font-display font-bold text-yellow-400">
-                    {(156 + (analytics.proUnlocks || 0)).toLocaleString()}
-                  </span>
+
+              {/* Chart Column */}
+              <div className="w-full lg:w-2/3 bg-[#09090B] rounded-2xl p-6 border border-white/5">
+                <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-6 flex items-center gap-2">
+                  <BarChart2 className="w-4 h-4" /> Activity Trend (Last 7 Days)
+                </h3>
+                <div className="h-[250px] w-full flex items-end justify-between gap-2 pt-8">
+                  {(Object.keys(analytics.dailyViews || {}).length > 0 
+                    ? Object.entries(analytics.dailyViews).map(([date, visits]) => ({ name: date.slice(5), visits })).slice(-7)
+                    : [
+                      { name: 'Day 1', visits: 120 }, { name: 'Day 2', visits: 150 }, { name: 'Day 3', visits: 180 },
+                      { name: 'Day 4', visits: 220 }, { name: 'Day 5', visits: 190 }, { name: 'Day 6', visits: 280 },
+                      { name: 'Today', visits: 310 + (analytics.visits || 0) }
+                    ]
+                  ).map((data, i, arr) => {
+                    const maxVisits = Math.max(...arr.map(d => d.visits), 400);
+                    const heightPercent = Math.max((data.visits / maxVisits) * 100, 10);
+                    
+                    return (
+                      <div key={data.name} className="flex flex-col items-center flex-1 h-full justify-end group">
+                        <div className="w-full relative flex items-end justify-center h-full">
+                          {/* Tooltip */}
+                          <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-[#18181B] border border-white/10 text-white text-xs py-1 px-2 rounded-lg whitespace-nowrap z-10 pointer-events-none">
+                            {data.visits.toLocaleString()} visits
+                          </div>
+                          {/* Bar */}
+                          <div 
+                            className="w-full max-w-[40px] bg-[#39FF14]/20 group-hover:bg-[#39FF14]/40 rounded-t-lg transition-all relative overflow-hidden"
+                            style={{ height: `${heightPercent}%` }}
+                          >
+                            <div className="absolute top-0 w-full h-1 bg-[#39FF14]"></div>
+                          </div>
+                        </div>
+                        <span className="text-[10px] sm:text-xs text-zinc-500 mt-3 font-medium whitespace-nowrap overflow-hidden text-ellipsis w-full text-center">
+                          {data.name}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -1373,14 +1417,17 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Column 2: Support & Business */}
+              {/* Column 2: Contact & Support */}
               <div className="space-y-4">
-                <h4 className="text-white font-bold font-display tracking-wider uppercase text-sm">Support & Business</h4>
+                <h4 className="text-white font-bold font-display tracking-wider uppercase text-sm">Contact & Support</h4>
                 <div className="flex flex-col space-y-2 text-sm text-zinc-500">
+                  <a href="mailto:zidpath@gmail.com" className="text-left w-fit flex items-center gap-2 hover:text-[#39FF14] text-white font-bold transition-colors mb-2">
+                    <Mail className="w-4 h-4" /> zidpath@gmail.com
+                  </a>
                   <button onClick={() => setActiveModal('FAQ')} className="text-left w-fit hover:text-[#04D9FF] transition-colors">Help Center / FAQ</button>
                   <button onClick={() => setShowFeedback(true)} className="text-left w-fit hover:text-[#04D9FF] transition-colors">Submit Feedback</button>
-                  <a href="mailto:zidpath@gmail.com?subject=Sponsorship%20Inquiry" className="text-left w-fit hover:text-[#39FF14] transition-colors font-medium">Sponsor / Advertise with Us</a>
-                  <a href="mailto:zidpath@gmail.com" className="text-left w-fit hover:text-[#04D9FF] transition-colors">Help: zidpath@gmail.com</a>
+                  <a href="mailto:zidpath@gmail.com?subject=Sponsorship%20Inquiry" className="text-left w-fit hover:text-[#FF10F0] transition-colors">Sponsor / Advertise with Us</a>
+
                 </div>
               </div>
 

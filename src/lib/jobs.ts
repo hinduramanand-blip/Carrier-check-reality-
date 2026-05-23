@@ -1,5 +1,17 @@
 export const jobCategories = [
   {
+    category: "Degrees & Competitive Exams (India)",
+    jobs: [
+      "UPSC Aspirant", "NEET Aspirant", "JEE Aspirant", "SSC CGL Aspirant", "Bank PO Aspirant",
+      "CA (Chartered Accountant) Aspirant", "GATE Aspirant", "CAT Aspirant", "NDA/CDS Aspirant", "State PCS Aspirant",
+      "B.Tech / B.E. Student", "BCA Student", "B.Com Student", "BA Student", "B.Sc Student",
+      "MBA Student", "MCA Student", "M.Tech Student", "M.Sc Student", "MA Student",
+      "ITI Student", "Polytechnic / Diploma Student", "B.Ed Student", "LLB / Law Student", "Medical Student (MBBS)",
+      "PhD Scholar", "CS (Company Secretary) Aspirant", "CMA Aspirant", "CUET Aspirant", "CLAT Aspirant",
+      "College Dropout", "Recent Graduate (Unemployed)", "Government Job Aspirant"
+    ]
+  },
+  {
     category: "Software & IT",
     jobs: [
       "Software Engineer", "Frontend Developer", "Backend Developer", "Full Stack Developer",
