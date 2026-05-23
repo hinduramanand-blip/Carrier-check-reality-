@@ -9,6 +9,7 @@ import { getSettings, getAnalytics, incrementVisits, incrementClicks, addFeedbac
 import { jobList, jobCategories } from './lib/jobs';
 import { toJpeg } from 'html-to-image';
 import { jsPDF } from 'jspdf';
+import ReactMarkdown from 'react-markdown';
 
 const generateWithRetry = async (modelName: string, contents: string, config: any, maxRetries = 3) => {
   let attempt = 0;
@@ -247,16 +248,37 @@ export default function App() {
     try {
       const response = await generateWithRetry(
         'gemini-3-flash-preview',
-        `Generate a 'Career Reality Check' for ${name}.
-        Their dream goal/job/degree/exam is: ${dreamJob}. (This could be a job, business, college degree like B.Tech/BCA, or competitive exam preparation like UPSC/NEET/JEE).
-        They spend ${socialMediaHours} hours on social media daily.
+        `You are a brutal, savage, and hilarious Career Roasting AI for an app called "Career Check Reality". Your job is to destroy the user's delusions about their career based on their inputs:
+        Name: ${name}
+        Current Profession/Studies/Goal: ${dreamJob}
+        Daily Mobile Screen Time: ${socialMediaHours} hours
         
-        IMPORTANT: The entire response (roast, roadmap, pro tip, summary) MUST be in a bilingual format (Hindi + English / Hinglish) so it's easily understood by everyone. Provide the absolute BEST advice tailored to their specific goal, whether it's a job, a business, or anything else.
+        Even if the input data is limited, you must use your creativity to guess their biggest distractions (like Instagram Reels, Crush, or gaming), their fake dreams (like 12 LPA package with zero skills), and their ultimate pain points (like low CGPA or backlogs).
+
+        You must strictly generate the 'roast' field in the following HINDI-ENGLISH (Hinglish) format so it can be easily displayed on the app dashboard:
+
+        ### 📊 CAREER SURVIVAL SCORE: [Generate a percentage between 5% to 35% based on their high screen time]
+        ### 🧠 DELUSION LEVEL (गलतफ़हमी का स्तर): [Generate a percentage between 85% to 99%]
+
+        ---
+
+        ### 💀 THE SAVAGE ROAST (औकात चेक)
+        [Write a brutal, funny, and highly relatable roast here in Hinglish. 
+        - Style: ${settings.roastMode}.
+        - Target their profession (e.g., B.Tech, UPSC, B.Com, MBA).
+        - Roast their high mobile screen time severely.
+        - Punchline Example: "सपना 12 लाख के पैकेज का और स्किल्स 12 रुपये की भी नहीं! इतने स्क्रीन टाइम में तो मार्क जुकरबर्ग भी तुम्हारे घर आकर पैसे नहीं देगा।"
+        - Use sharp, trendy Indian meme references, but keep it strictly about careers and wasting time.]
+
+        ---
+
+        ### 🔮 FUTURE REALITY (भविष्यवाणी)
+        [Write a 2-line dark reality prediction about where they will be in 5 years if they don't change, using savage humor.]
         
-        1. Write a funny, sarcastic, and ${settings.roastMode.toLowerCase()} roast in Hinglish (Hindi + English) about how their social media habits are destroying their chances of achieving their goal. Be brutal but funny.
-        2. Provide a clear, serious 7-day roadmap (table of tasks) in Hinglish to help them actually start working toward their goal.
-        3. Provide one Career/Business Pro Tip in Hinglish.
-        4. Provide a short, punchy summary text for WhatsApp sharing that includes a snippet of the roast in Hinglish.`,
+        Additionally, you must provide:
+        - A clear, serious 7-day 'roadmap' (table of tasks) in Hinglish.
+        - One 'proTip' in Hinglish.
+        - A 'shareText' for WhatsApp.`,
         {
           responseMimeType: 'application/json',
           responseSchema: {
@@ -321,7 +343,18 @@ export default function App() {
         
         IMPORTANT: The entire response MUST be in a bilingual format (Hindi + English / Hinglish) so it's easily understood by everyone. Provide the absolute BEST advice tailored to their specific goal.
         
-        1. savageRoast: Write an incredibly savage, brutal roast in Hinglish about their social media habits.
+        1. savageRoast: Write an incredibly savage, brutal roast in Hinglish about their social media habits. YOU MUST STRICTLY FORMAT THIS FIELD AS FOLLOWS:
+        ### 📊 CAREER SURVIVAL SCORE: [Generate a percentage]
+        ### 🧠 DELUSION LEVEL: [Generate a percentage]
+
+        ---
+        ### 💀 THE SAVAGE ROAST (PRO LEVEL)
+        [Write the roast here...]
+
+        ---
+        ### 🔮 FUTURE REALITY
+        [Write the dark 5-year prediction...]
+        
         2. proRoadmap: Generate a highly detailed 30-day Pro roadmap with tasks in Hinglish. Each task should be long and descriptive, breaking down exactly WHAT to do and HOW to do it.
            - Phase 1: Foundation (Day 1-10) - Mindset shifts, Power habits, and Groundwork.
            - Phase 2: Action (Day 11-20) - Detailed step-by-step strategy, Skill acquisition, and Networking.
@@ -957,9 +990,9 @@ export default function App() {
                   </div>
                   <h2 className="text-2xl font-display font-bold text-white">The Roast</h2>
                 </div>
-                <p className="text-lg md:text-xl leading-relaxed text-zinc-300 italic">
-                  "{result.roast}"
-                </p>
+                <div className="text-xl md:text-2xl leading-relaxed font-medium text-zinc-200 markdown-body max-w-none">
+                  <ReactMarkdown>{result.roast}</ReactMarkdown>
+                </div>
                 
                 <button 
                   onClick={handleShare}
@@ -1116,9 +1149,9 @@ export default function App() {
                   </div>
                   <h2 className="text-2xl font-display font-bold text-white">Savage Roast (Pro)</h2>
                 </div>
-                <p className="text-lg md:text-xl leading-relaxed text-zinc-300 italic">
-                  "{result.savageRoast}"
-                </p>
+                <div className="text-xl md:text-2xl leading-relaxed font-medium text-zinc-200 markdown-body max-w-none">
+                  <ReactMarkdown>{result.savageRoast}</ReactMarkdown>
+                </div>
                 
                 <button 
                   onClick={handleShare}

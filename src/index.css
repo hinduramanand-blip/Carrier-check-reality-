@@ -39,3 +39,30 @@ body {
     overflow: visible !important;
   }
 }
+
+.markdown-body h3 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.5rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  color: #fff;
+  letter-spacing: 0.05em;
+}
+
+.markdown-body p {
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+  font-weight: 500;
+  font-size: inherit;
+}
+
+.markdown-body strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.markdown-body hr {
+  border-color: rgba(255, 255, 255, 0.1);
+  margin: 1.5rem 0;
+}
