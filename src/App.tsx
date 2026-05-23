@@ -94,6 +94,7 @@ export default function App() {
     showAnnouncement: false,
     announcementText: '',
     announcementUrl: '',
+    amazonAffiliateTag: '',
     customModules: [] as { id: string, title: string, content: string }[]
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -603,7 +604,8 @@ export default function App() {
     if (!result) return;
     
     // Create the message to share
-    const shareText = result.shareText || `Check out my Career Reality Check!\n\n${result.roast}\n\n`;
+    const roastText = result.type === 'free' ? result.roast : result.savageRoast;
+    const shareText = result.shareText || `Check out my Career Reality Check!\n\n${roastText}\n\n`;
     const shareUrl = window.location.origin;
 
     if (navigator.share) {
