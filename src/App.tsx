@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type } from '@google/genai';
-import { Flame, Target, Clock, Share2, Lock, ArrowRight, Loader2, User, Sparkles, Shield, Search, Twitter, Instagram, Youtube, Mail, Menu, Download, Smartphone, Printer, AlertTriangle, CheckSquare, BarChart2, Users } from 'lucide-react';
+import { Flame, Target, Clock, Share2, Lock, ArrowRight, Loader2, User, Sparkles, Shield, Search, Twitter, Instagram, Youtube, Mail, Menu, Download, Smartphone, Printer, AlertTriangle, CheckSquare, BarChart2, Users, Moon, Sun } from 'lucide-react';
 import Modal from './components/Modal';
-import Chatbot from './components/Chatbot';
-import AdminDashboard from './components/AdminDashboard';
+import LandingPage from './components/LandingPage';
 import { getSettings, getAnalytics, incrementVisits, incrementClicks, addFeedback, incrementRoasts, incrementProUnlocks } from './lib/store';
 import { jobList, jobCategories } from './lib/jobs';
 import { toJpeg } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import ReactMarkdown from 'react-markdown';
+
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const Chatbot = lazy(() => import('./components/Chatbot'));
 
 const generateWithRetry = async (modelName: string, contents: string, config: any, maxRetries = 3) => {
   let attempt = 0;
@@ -81,6 +83,8 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [showLanding, setShowLanding] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [settings, setSettings] = useState({ 
     price: 19, 
@@ -718,7 +722,7 @@ export default function App() {
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-              <button onClick={() => { setResult(null); setActiveModal(null); }} className="text-white hover:text-[#39FF14] transition-colors">Home</button>
+              <button onClick={() => { setResult(null); setActiveModal(null); setShowLanding(true); }} className="text-white hover:text-[#39FF14] transition-colors">Home</button>
               <button onClick={() => setActiveModal('About Us')} className="text-zinc-400 hover:text-white transition-colors">About Us</button>
               <button onClick={() => setActiveModal('Contact Us')} className="text-zinc-400 hover:text-white transition-colors">Contact Us</button>
               <button onClick={handleGlobalShare} className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors">
@@ -750,15 +754,29 @@ export default function App() {
             </div>
 
             {/* Download App Button */}
-            {!isStandalone && (
+            <div className="flex items-center gap-4">
               <button 
-                onClick={() => setShowAppDownload(true)}
-                className="step-3-download hidden md:flex items-center gap-2 bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/30 hover:bg-[#39FF14]/20 px-4 py-2 rounded-full text-sm font-bold transition-all"
+                onClick={() => {
+                  if (isDarkMode) {
+                    alert("This reality check is too brutal for light mode. Dark mode locked 🔒");
+                  }
+                }}
+                className="hidden md:flex p-2 text-zinc-400 hover:text-white transition-colors"
+                title="Toggle Theme"
               >
-                <Smartphone className="w-4 h-4" />
-                <span>Get App</span>
+                {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
-            )}
+              
+              {!isStandalone && (
+                <button 
+                  onClick={() => setShowAppDownload(true)}
+                  className="step-3-download hidden md:flex items-center gap-2 bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/30 hover:bg-[#39FF14]/20 px-4 py-2 rounded-full text-sm font-bold transition-all"
+                >
+                  <Smartphone className="w-4 h-4" />
+                  <span>Get App</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Mobile Menu Dropdown */}
@@ -771,7 +789,7 @@ export default function App() {
                 className="md:hidden border-t border-white/5 bg-[#09090B] overflow-hidden"
               >
                 <div className="flex flex-col px-4 py-4 space-y-4 text-sm font-medium">
-                  <button onClick={() => { setResult(null); setActiveModal(null); setIsMobileMenuOpen(false); }} className="text-left text-white hover:text-[#39FF14] transition-colors">Home</button>
+                  <button onClick={() => { setResult(null); setActiveModal(null); setIsMobileMenuOpen(false); setShowLanding(true); }} className="text-left text-white hover:text-[#39FF14] transition-colors">Home</button>
                   <button onClick={() => { setActiveModal('About Us'); setIsMobileMenuOpen(false); }} className="text-left text-zinc-400 hover:text-white transition-colors">About Us</button>
                   <button onClick={() => { setActiveModal('Contact Us'); setIsMobileMenuOpen(false); }} className="text-left text-zinc-400 hover:text-white transition-colors">Contact Us</button>
                   <button onClick={() => { handleGlobalShare(); setIsMobileMenuOpen(false); }} className="text-left text-zinc-400 hover:text-white transition-colors flex items-center gap-2">
@@ -801,7 +819,11 @@ export default function App() {
       )}
 
       {isAdmin ? (
-        <AdminDashboard onLogout={() => setIsAdmin(false)} />
+        <Suspense fallback={<div className="min-h-screen items-center justify-center flex"><Loader2 className="w-8 h-8 animate-spin text-[#39FF14]" /></div>}>
+          <AdminDashboard onLogout={() => setIsAdmin(false)} />
+        </Suspense>
+      ) : showLanding ? (
+        <LandingPage onTryOnline={() => setShowLanding(false)} onDownloadApp={() => setShowAppDownload(true)} isStandalone={isStandalone} />
       ) : (
         <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-12 md:py-20">
         
@@ -1986,7 +2008,11 @@ export default function App() {
       </Modal>
 
       {/* Chatbot */}
-      {!isAdmin && <Chatbot />}
+      {!isAdmin && (
+        <Suspense fallback={null}>
+          <Chatbot />
+        </Suspense>
+      )}
 
       {/* Mobile App Install Floating Banner */}
       {!isAdmin && !isStandalone && (
