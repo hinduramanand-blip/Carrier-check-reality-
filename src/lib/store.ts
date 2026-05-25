@@ -12,6 +12,9 @@ export const getSettings = () => {
     showAnnouncement: false,
     announcementText: '',
     announcementUrl: '',
+    showPopupNote: false,
+    popupNoteTitle: '',
+    popupNoteText: '',
     adminNotes: '',
     amazonAffiliateTag: '',
     geminiApiKey: '',
@@ -41,6 +44,9 @@ export const saveSettings = (settings: {
   showAnnouncement?: boolean;
   announcementText?: string;
   announcementUrl?: string;
+  showPopupNote?: boolean;
+  popupNoteTitle?: string;
+  popupNoteText?: string;
   adminNotes?: string;
   amazonAffiliateTag?: string;
   geminiApiKey?: string;

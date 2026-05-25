@@ -17,6 +17,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [announcementText, setAnnouncementText] = useState('');
   const [announcementUrl, setAnnouncementUrl] = useState('');
+  const [showPopupNote, setShowPopupNote] = useState(false);
+  const [popupNoteTitle, setPopupNoteTitle] = useState('');
+  const [popupNoteText, setPopupNoteText] = useState('');
   const [adminNotes, setAdminNotes] = useState('');
   const [amazonAffiliateTag, setAmazonAffiliateTag] = useState('');
   const [geminiApiKey, setGeminiApiKey] = useState('');
@@ -39,6 +42,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setShowAnnouncement(settings.showAnnouncement || false);
     setAnnouncementText(settings.announcementText || '');
     setAnnouncementUrl(settings.announcementUrl || '');
+    setShowPopupNote(settings.showPopupNote || false);
+    setPopupNoteTitle(settings.popupNoteTitle || '');
+    setPopupNoteText(settings.popupNoteText || '');
     setAdminNotes(settings.adminNotes || '');
     setAmazonAffiliateTag(settings.amazonAffiliateTag || '');
     setGeminiApiKey(settings.geminiApiKey || '');
@@ -66,6 +72,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       showAnnouncement,
       announcementText,
       announcementUrl,
+      showPopupNote,
+      popupNoteTitle,
+      popupNoteText,
       adminNotes,
       amazonAffiliateTag,
       geminiApiKey,
@@ -276,6 +285,47 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         onChange={(e) => setAnnouncementUrl(e.target.value)}
                         placeholder="https://..."
                         className="w-full bg-[#09090B] border border-white/10 rounded-xl py-2 px-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#39FF14] focus:ring-1 focus:ring-[#39FF14] transition-all"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-[#18181B] rounded-2xl p-6 border border-white/5">
+              <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">Screen Popup Note (Alert)</h3>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <input 
+                    type="checkbox" 
+                    id="showPopupNote"
+                    checked={showPopupNote}
+                    onChange={(e) => setShowPopupNote(e.target.checked)}
+                    className="w-4 h-4 rounded border-white/10 bg-[#09090B] text-[#04D9FF] focus:ring-[#04D9FF]"
+                  />
+                  <label htmlFor="showPopupNote" className="text-sm font-medium text-white">Enable Popup Note</label>
+                </div>
+                
+                {showPopupNote && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-400 mb-1">Note Title (e.g. Website Updating)</label>
+                      <input 
+                        type="text" 
+                        value={popupNoteTitle}
+                        onChange={(e) => setPopupNoteTitle(e.target.value)}
+                        placeholder="Notice / Update"
+                        className="w-full bg-[#09090B] border border-white/10 rounded-xl py-2 px-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#04D9FF] focus:ring-1 focus:ring-[#04D9FF] transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-400 mb-1">Message Text</label>
+                      <textarea 
+                        value={popupNoteText}
+                        onChange={(e) => setPopupNoteText(e.target.value)}
+                        placeholder="Service will be down for 5 minutes..."
+                        rows={3}
+                        className="w-full bg-[#09090B] border border-white/10 rounded-xl py-2 px-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#04D9FF] focus:ring-1 focus:ring-[#04D9FF] transition-all resize-none"
                       />
                     </div>
                   </>

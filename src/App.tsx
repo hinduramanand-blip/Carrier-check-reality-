@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type } from '@google/genai';
 import { Flame, Target, Clock, Share2, Lock, ArrowRight, Loader2, User, Sparkles, Shield, Search, Twitter, Instagram, Youtube, Mail, Menu, Download, Smartphone, Printer, AlertTriangle, CheckSquare, BarChart2, Users, Moon, Sun } from 'lucide-react';
 import Modal from './components/Modal';
-import LandingPage from './components/LandingPage';
+import AdSenseBanner from './components/AdSenseBanner';
 import { getSettings, getAnalytics, incrementVisits, incrementClicks, addFeedback, incrementRoasts, incrementProUnlocks } from './lib/store';
 import { jobList, jobCategories } from './lib/jobs';
 import { toJpeg } from 'html-to-image';
@@ -66,12 +66,20 @@ interface ProResultData {
 
 type ResultData = FreeResultData | ProResultData;
 
+interface HistoryEntry {
+  id: string;
+  date: string;
+  dreamJob: string;
+  result: ResultData;
+}
+
 export default function App() {
   const [name, setName] = useState('');
   const [dreamJob, setDreamJob] = useState('');
   const [socialMediaHours, setSocialMediaHours] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ResultData | null>(null);
+  const [userHistory, setUserHistory] = useState<HistoryEntry[]>([]);
   const [isProUnlocked, setIsProUnlocked] = useState(false);
   const [isAdminUnlock, setIsAdminUnlock] = useState(false);
   const [secretCode, setSecretCode] = useState('');
@@ -83,7 +91,7 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [showLanding, setShowLanding] = useState(true);
+  const [showNotice, setShowNotice] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [settings, setSettings] = useState({ 
@@ -99,6 +107,9 @@ export default function App() {
     showAnnouncement: false,
     announcementText: '',
     announcementUrl: '',
+    showPopupNote: false,
+    popupNoteTitle: '',
+    popupNoteText: '',
     amazonAffiliateTag: '',
     customModules: [] as { id: string, title: string, content: string }[]
   });
@@ -129,6 +140,7 @@ export default function App() {
   useEffect(() => {
     const savedResult = localStorage.getItem('careerResult');
     const hasSeenGuide = localStorage.getItem('hasSeenGuide');
+    const savedHistory = localStorage.getItem('careerHistory');
     
     if (!hasSeenGuide) {
       setShowGuide(true);
@@ -141,6 +153,14 @@ export default function App() {
         console.error('Failed to parse saved result', e);
       }
     }
+
+    if (savedHistory) {
+      try {
+        setUserHistory(JSON.parse(savedHistory));
+      } catch (e) {
+        console.error('Failed to parse saved history', e);
+      }
+    }
   }, []);
 
   // Save state on change
@@ -151,6 +171,10 @@ export default function App() {
       localStorage.removeItem('careerResult');
     }
   }, [result]);
+
+  useEffect(() => {
+    localStorage.setItem('careerHistory', JSON.stringify(userHistory));
+  }, [userHistory]);
 
   const handleInitiatePayment = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -186,13 +210,28 @@ export default function App() {
 
   useEffect(() => {
     incrementVisits();
-    setSettings(getSettings());
+    const currentSettings = getSettings();
+    setSettings(currentSettings);
+    
+    if (currentSettings.showPopupNote && currentSettings.popupNoteText && !isAdmin) {
+      setShowNotice(true);
+    }
+    
     setAnalytics(getAnalytics());
     const savedUser = localStorage.getItem('app_user');
     if (savedUser) {
       const parsed = JSON.parse(savedUser);
       setUser(parsed);
       setName(parsed.name);
+    }
+    
+    // Inject AdSense
+    if (currentSettings.adSenseId && !document.querySelector('script[src*="pagead2.googlesyndication.com"]')) {
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${currentSettings.adSenseId}`;
+      script.crossOrigin = 'anonymous';
+      document.head.appendChild(script);
     }
   }, []);
 
@@ -321,7 +360,20 @@ export default function App() {
       let dataText = response?.text || '{}';
       dataText = dataText.replace(/```json/g, '').replace(/```/g, '').trim();
       const data = JSON.parse(dataText);
-      setResult({ type: 'free', ...data });
+      const newResult: ResultData = { type: 'free', ...data };
+      setResult(newResult);
+      
+      setUserHistory((prev) => {
+        const entry: HistoryEntry = {
+          id: Date.now().toString(),
+          date: new Date().toISOString(),
+          dreamJob: dreamJob,
+          result: newResult
+        };
+        const updated = [entry, ...prev];
+        return updated.slice(0, 10); // Keep last 10
+      });
+      
       incrementRoasts();
     } catch (error: any) {
       console.error('Error generating reality check:', error);
@@ -421,7 +473,20 @@ export default function App() {
       let dataText = response?.text || '{}';
       dataText = dataText.replace(/```json/g, '').replace(/```/g, '').trim();
       const data = JSON.parse(dataText);
-      setResult({ type: 'pro', ...data });
+      const newResult: ResultData = { type: 'pro', ...data };
+      setResult(newResult);
+      
+      setUserHistory((prev) => {
+        const entry: HistoryEntry = {
+          id: Date.now().toString(),
+          date: new Date().toISOString(),
+          dreamJob: dreamJob,
+          result: newResult
+        };
+        const updated = [entry, ...prev];
+        return updated.slice(0, 10); // Keep last 10
+      });
+
       incrementRoasts();
     } catch (error: any) {
       console.error('Error generating PRO reality check:', error);
@@ -722,7 +787,7 @@ export default function App() {
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-              <button onClick={() => { setResult(null); setActiveModal(null); setShowLanding(true); }} className="text-white hover:text-[#39FF14] transition-colors">Home</button>
+              <button onClick={() => { setResult(null); setActiveModal(null); }} className="text-white hover:text-[#39FF14] transition-colors">Home</button>
               <button onClick={() => setActiveModal('About Us')} className="text-zinc-400 hover:text-white transition-colors">About Us</button>
               <button onClick={() => setActiveModal('Contact Us')} className="text-zinc-400 hover:text-white transition-colors">Contact Us</button>
               <button onClick={handleGlobalShare} className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors">
@@ -789,7 +854,7 @@ export default function App() {
                 className="md:hidden border-t border-white/5 bg-[#09090B] overflow-hidden"
               >
                 <div className="flex flex-col px-4 py-4 space-y-4 text-sm font-medium">
-                  <button onClick={() => { setResult(null); setActiveModal(null); setIsMobileMenuOpen(false); setShowLanding(true); }} className="text-left text-white hover:text-[#39FF14] transition-colors">Home</button>
+                  <button onClick={() => { setResult(null); setActiveModal(null); setIsMobileMenuOpen(false); }} className="text-left text-white hover:text-[#39FF14] transition-colors">Home</button>
                   <button onClick={() => { setActiveModal('About Us'); setIsMobileMenuOpen(false); }} className="text-left text-zinc-400 hover:text-white transition-colors">About Us</button>
                   <button onClick={() => { setActiveModal('Contact Us'); setIsMobileMenuOpen(false); }} className="text-left text-zinc-400 hover:text-white transition-colors">Contact Us</button>
                   <button onClick={() => { handleGlobalShare(); setIsMobileMenuOpen(false); }} className="text-left text-zinc-400 hover:text-white transition-colors flex items-center gap-2">
@@ -822,8 +887,6 @@ export default function App() {
         <Suspense fallback={<div className="min-h-screen items-center justify-center flex"><Loader2 className="w-8 h-8 animate-spin text-[#39FF14]" /></div>}>
           <AdminDashboard onLogout={() => setIsAdmin(false)} />
         </Suspense>
-      ) : showLanding ? (
-        <LandingPage onTryOnline={() => setShowLanding(false)} onDownloadApp={() => setShowAppDownload(true)} isStandalone={isStandalone} />
       ) : (
         <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-12 md:py-20">
         
@@ -844,6 +907,12 @@ export default function App() {
           <p className="text-zinc-400 text-lg md:text-xl max-w-xl mx-auto">
             Get roasted for your habits, then get a serious roadmap to actually achieve your dreams.
           </p>
+          {userHistory.length > 0 && (
+            <div className="mt-4 inline-flex items-center gap-2 bg-[#FF10F0]/10 border border-[#FF10F0]/20 rounded-full px-4 py-1.5 cursor-pointer hover:bg-[#FF10F0]/20 transition-colors" onClick={() => setActiveModal('History')}>
+              <Clock className="w-4 h-4 text-[#FF10F0]" />
+              <span className="text-sm font-bold text-[#FF10F0]">You have roasted yourself {userHistory.length} times. View History</span>
+            </div>
+          )}
         </motion.div>
 
         <AnimatePresence mode="wait">
@@ -1325,13 +1394,9 @@ export default function App() {
       </main>
       )}
 
-      {/* AdSense Placeholder Space */}
+      {/* AdSense Space */}
       {!isAdmin && settings.adSenseId && (
-        <div className="w-full max-w-6xl mx-auto mt-8 px-6">
-          <div className="w-full p-4 border border-dashed border-zinc-700 rounded-xl flex items-center justify-center text-zinc-500 text-sm bg-black/20">
-            Advertisement Space (AdSense ID: {settings.adSenseId})
-          </div>
-        </div>
+        <AdSenseBanner adSenseId={settings.adSenseId} />
       )}
 
       {/* Custom Ad Banner */}
@@ -1509,6 +1574,21 @@ export default function App() {
         </footer>
       )}
 
+      {/* Popup Notice Modal */}
+      {showNotice && !isAdmin && (
+        <Modal isOpen={showNotice} onClose={() => setShowNotice(false)} title={settings.popupNoteTitle || 'Important Notice'}>
+          <div className="space-y-4">
+            <p className="text-zinc-300 whitespace-pre-wrap">{settings.popupNoteText}</p>
+            <button 
+              onClick={() => setShowNotice(false)}
+              className="w-full bg-[#04D9FF] text-black font-bold rounded-xl py-3 hover:bg-[#04D9FF]/90 transition-colors mt-4"
+            >
+              I Understand
+            </button>
+          </div>
+        </Modal>
+      )}
+
       {/* Admin Login Modal */}
       <Modal isOpen={showAdminLogin} onClose={() => setShowAdminLogin(false)} title="Admin Access">
         <form onSubmit={handleAdminLogin} className="space-y-4">
@@ -1684,7 +1764,7 @@ export default function App() {
               <div className="p-2 bg-[#04D9FF]/10 rounded-lg shrink-0"><Sparkles className="w-5 h-5 text-[#04D9FF]"/></div>
               <div>
                 <p className="font-bold text-white">2. Master Reading List</p>
-                <p className="text-xs text-zinc-400">Top 3 books ki summary jo aapki mindset ko transform karegi.</p>
+                <p className="text-xs text-zinc-400">Top 5 books ki summary aur affiliate links jo aapki mindset ko transform karegi.</p>
               </div>
             </div>
             
@@ -2003,6 +2083,29 @@ export default function App() {
                 भेजें (Submit)
               </button>
             </form>
+          )}
+          {activeModal === 'History' && (
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              {userHistory.length === 0 ? (
+                <p className="text-zinc-400 text-center py-8">You haven't generated any roasts yet.</p>
+              ) : (
+                userHistory.map((item) => (
+                  <div key={item.id} className="bg-[#09090B] p-4 rounded-xl border border-white/5 cursor-pointer hover:border-[#FF10F0]/50 transition-colors"
+                       onClick={() => {
+                         setResult(item.result);
+                         setActiveModal(null);
+                       }}>
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="font-bold text-[#FF10F0]">{item.dreamJob}</span>
+                      <span className="text-xs text-zinc-500">{new Date(item.date).toLocaleDateString()}</span>
+                    </div>
+                    <p className="text-sm text-zinc-400 line-clamp-2">
+                       {item.result.type === 'free' ? item.result.roast : item.result.savageRoast}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
           )}
         </div>
       </Modal>
