@@ -101,6 +101,7 @@ export default function App() {
     adSenseId: '',
     customAdImageUrl: '',
     customAdLink: '',
+    adminEmail: '',
     instagramUrl: '',
     twitterUrl: '',
     youtubeUrl: '',
@@ -138,20 +139,11 @@ export default function App() {
 
   // Load state on mount
   useEffect(() => {
-    const savedResult = localStorage.getItem('careerResult');
     const hasSeenGuide = localStorage.getItem('hasSeenGuide');
     const savedHistory = localStorage.getItem('careerHistory');
     
     if (!hasSeenGuide) {
       setShowGuide(true);
-    }
-    
-    if (savedResult) {
-      try {
-        setResult(JSON.parse(savedResult));
-      } catch (e) {
-        console.error('Failed to parse saved result', e);
-      }
     }
 
     if (savedHistory) {
@@ -162,15 +154,6 @@ export default function App() {
       }
     }
   }, []);
-
-  // Save state on change
-  useEffect(() => {
-    if (result) {
-      localStorage.setItem('careerResult', JSON.stringify(result));
-    } else {
-      localStorage.removeItem('careerResult');
-    }
-  }, [result]);
 
   useEffect(() => {
     localStorage.setItem('careerHistory', JSON.stringify(userHistory));
@@ -558,7 +541,7 @@ export default function App() {
     const brandingText = element.querySelector('#pdf-branding-text');
     const originalBranding = brandingText ? brandingText.textContent : '';
     if (brandingText) {
-      brandingText.textContent = isAdminUnlock ? 'DESIGN BY RAMY (ADMIN MODE)' : 'DESIGN BY RAMY';
+      brandingText.textContent = isAdminUnlock ? 'DESIGN BY RAMY (ADMIN MODE)' : 'DESIGN BY STUDENT';
     }
 
     // Show loading toast
@@ -676,7 +659,7 @@ export default function App() {
     const brandingText = element.querySelector('#pdf-branding-text');
     const originalBranding = brandingText ? brandingText.textContent : '';
     if (brandingText) {
-      brandingText.textContent = isAdminUnlock ? 'DESIGN BY RAMY (ADMIN MODE)' : 'DESIGN BY RAMY';
+      brandingText.textContent = isAdminUnlock ? 'DESIGN BY RAMY (ADMIN MODE)' : 'DESIGN BY STUDENT';
     }
 
     // Force synchronous reflow so the DOM updates immediately
@@ -1223,7 +1206,7 @@ export default function App() {
               <div className="text-center pt-8">
                 <button 
                   onClick={() => setResult(null)}
-                  className="text-zinc-500 hover:text-white transition-colors underline underline-offset-4 text-sm"
+                  className="inline-flex items-center justify-center bg-[#09090B] border border-[#39FF14]/30 rounded-xl px-6 py-3 text-[#39FF14] font-bold hover:bg-[#39FF14]/10 hover:shadow-[0_0_15px_rgba(57,255,20,0.2)] transition-all"
                 >
                   I want another reality check
                 </button>
@@ -1388,7 +1371,7 @@ export default function App() {
               <div className="text-center pt-8 print:hidden">
                 <button 
                   onClick={() => setResult(null)}
-                  className="text-zinc-500 hover:text-white transition-colors underline underline-offset-4 text-sm"
+                  className="inline-flex items-center justify-center bg-[#09090B] border border-[#39FF14]/30 rounded-xl px-6 py-3 text-[#39FF14] font-bold hover:bg-[#39FF14]/10 hover:shadow-[0_0_15px_rgba(57,255,20,0.2)] transition-all"
                 >
                   I want another reality check
                 </button>
@@ -1423,6 +1406,23 @@ export default function App() {
         </div>
       )}
 
+      {/* Advertise With Us Fallback */}
+      {!isAdmin && !settings.customAdImageUrl && settings.adminEmail && (
+        <div className="w-full max-w-6xl mx-auto mt-8 px-6">
+          <div className="w-full bg-[#18181B] rounded-xl border border-white/10 border-dashed p-6 text-center hover:border-[#39FF14]/50 transition-colors">
+            <h3 className="text-zinc-400 font-medium mb-2">Want to advertise here?</h3>
+            <p className="text-sm text-zinc-500 mb-4">Reach thousands of tech professionals looking for a reality check.</p>
+            <a 
+              href={`mailto:${settings.adminEmail}?subject=Advertising%20Inquiry`}
+              className="inline-flex items-center justify-center bg-[#09090B] border border-white/10 rounded-lg px-4 py-2 text-sm text-[#39FF14] font-medium hover:bg-[#39FF14]/10 transition-colors"
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              Contact {settings.adminEmail}
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Custom Modules */}
       {!isAdmin && settings.customModules && settings.customModules.length > 0 && (
         <div className="w-full max-w-4xl mx-auto mt-12 px-6 space-y-8">
@@ -1439,7 +1439,7 @@ export default function App() {
       {!isAdmin && (
         <div className="w-full max-w-6xl mx-auto mt-12 px-6">
           <div className="bg-[#18181B] rounded-3xl p-6 md:p-8 border border-[#39FF14]/10 relative overflow-hidden">
-            <div className="flex flex-col lg:flex-row gap-8 relative z-10 w-full">
+            <div className="relative z-10 w-full">
               {/* Chart Column */}
               <div className="w-full bg-[#09090B] rounded-2xl p-6 border border-white/5">
                 <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-6 flex items-center gap-2">
@@ -1530,7 +1530,7 @@ export default function App() {
                 © 2026 Career Reality Check | All Rights Reserved.
               </p>
               <p className="text-xs text-[#39FF14] font-medium tracking-wide mt-2 uppercase">
-                Design by student
+                DESIGN BY STUDENT
               </p>
             </div>
           </div>

@@ -11,6 +11,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [adSenseId, setAdSenseId] = useState('');
   const [customAdImageUrl, setCustomAdImageUrl] = useState('');
   const [customAdLink, setCustomAdLink] = useState('');
+  const [adminEmail, setAdminEmail] = useState('');
   const [instagramUrl, setInstagramUrl] = useState('');
   const [twitterUrl, setTwitterUrl] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -36,6 +37,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setAdSenseId(settings.adSenseId || '');
     setCustomAdImageUrl(settings.customAdImageUrl || '');
     setCustomAdLink(settings.customAdLink || '');
+    setAdminEmail(settings.adminEmail || '');
     setInstagramUrl(settings.instagramUrl || '');
     setTwitterUrl(settings.twitterUrl || '');
     setYoutubeUrl(settings.youtubeUrl || '');
@@ -66,6 +68,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       adSenseId, 
       customAdImageUrl,
       customAdLink,
+      adminEmail,
       instagramUrl, 
       twitterUrl, 
       youtubeUrl,
@@ -215,6 +218,16 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     value={customAdLink}
                     onChange={(e) => setCustomAdLink(e.target.value)}
                     placeholder="https://sponsor-website.com"
+                    className="w-full bg-[#09090B] border border-white/10 rounded-xl py-2 px-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#39FF14] focus:ring-1 focus:ring-[#39FF14] transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1">Admin Email for Ad Inquiries</label>
+                  <input 
+                    type="email" 
+                    value={adminEmail}
+                    onChange={(e) => setAdminEmail(e.target.value)}
+                    placeholder="admin@example.com (Shows if Custom Ad is empty)"
                     className="w-full bg-[#09090B] border border-white/10 rounded-xl py-2 px-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#39FF14] focus:ring-1 focus:ring-[#39FF14] transition-all"
                   />
                 </div>
@@ -377,8 +390,8 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
           <div className="mt-6">
             <h3 className="text-sm font-medium text-zinc-400 mb-4 uppercase tracking-wider">Daily Views</h3>
-            <div className="h-[200px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-[200px] w-full min-w-0">
+              <ResponsiveContainer width="99%" height="100%">
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                   <XAxis 

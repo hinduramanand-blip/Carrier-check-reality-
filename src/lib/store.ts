@@ -6,6 +6,7 @@ export const getSettings = () => {
     adSenseId: '',
     customAdImageUrl: '',
     customAdLink: '',
+    adminEmail: '',
     instagramUrl: '',
     twitterUrl: '',
     youtubeUrl: '',
@@ -38,6 +39,7 @@ export const saveSettings = (settings: {
   adSenseId?: string;
   customAdImageUrl?: string;
   customAdLink?: string;
+  adminEmail?: string;
   instagramUrl?: string;
   twitterUrl?: string;
   youtubeUrl?: string;
