@@ -178,7 +178,12 @@ export default function App() {
 
   const handleInitiatePayment = (e: React.MouseEvent) => {
     e.preventDefault();
-    const url = settings.razorpayLink;
+    let url = settings.razorpayLink?.trim() || '';
+    
+    // Add protocol if missing
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
     
     // Try to open in new tab
     const newWin = window.open(url, '_blank');
@@ -1434,51 +1439,9 @@ export default function App() {
       {!isAdmin && (
         <div className="w-full max-w-6xl mx-auto mt-12 px-6">
           <div className="bg-[#18181B] rounded-3xl p-6 md:p-8 border border-[#39FF14]/10 relative overflow-hidden">
-            <div className="flex flex-col lg:flex-row gap-8 relative z-10">
-              {/* Stats Column */}
-              <div className="w-full lg:w-1/3 flex flex-col justify-center space-y-8">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-[#04D9FF]/20 rounded-lg text-[#04D9FF]">
-                      <BarChart2 className="w-6 h-6" />
-                    </div>
-                    <h2 className="text-2xl font-display font-bold text-white">Our Global Impact</h2>
-                  </div>
-                  <p className="text-zinc-400">Live statistics showing how many careers we've roasted and transformed.</p>
-                </div>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="bg-[#09090B] p-4 rounded-2xl border border-white/5 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-[#39FF14]/10 rounded-lg"><Users className="w-5 h-5 text-[#39FF14]" /></div>
-                      <span className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Total Visitors</span>
-                    </div>
-                    <span className="text-2xl font-display font-bold text-[#39FF14]">
-                      {(1024 + (analytics.visits || 0)).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="bg-[#09090B] p-4 rounded-2xl border border-white/5 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-[#FF10F0]/10 rounded-lg"><Flame className="w-5 h-5 text-[#FF10F0]" /></div>
-                      <span className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Roasts Generated</span>
-                    </div>
-                    <span className="text-2xl font-display font-bold text-[#FF10F0]">
-                      {(841 + (analytics.roastsGenerated || 0)).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="bg-[#09090B] p-4 rounded-2xl border border-white/5 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-yellow-400/10 rounded-lg"><Lock className="w-5 h-5 text-yellow-400" /></div>
-                      <span className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Pro Roadmaps Unlocked</span>
-                    </div>
-                    <span className="text-2xl font-display font-bold text-yellow-400">
-                      {(156 + (analytics.proUnlocks || 0)).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
+            <div className="flex flex-col lg:flex-row gap-8 relative z-10 w-full">
               {/* Chart Column */}
-              <div className="w-full lg:w-2/3 bg-[#09090B] rounded-2xl p-6 border border-white/5">
+              <div className="w-full bg-[#09090B] rounded-2xl p-6 border border-white/5">
                 <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-6 flex items-center gap-2">
                   <BarChart2 className="w-4 h-4" /> Activity Trend (Last 7 Days)
                 </h3>
