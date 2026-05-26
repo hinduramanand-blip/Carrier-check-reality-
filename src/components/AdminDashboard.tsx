@@ -390,8 +390,8 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
           <div className="mt-6">
             <h3 className="text-sm font-medium text-zinc-400 mb-4 uppercase tracking-wider">Daily Views</h3>
-            <div className="h-[200px] w-full min-w-0">
-              <ResponsiveContainer width="99%" height="100%">
+            <div className="h-[200px] w-full min-w-0" style={{ minHeight: 200 }}>
+              <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                   <XAxis 
