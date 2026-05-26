@@ -1,9 +1,10 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type } from '@google/genai';
-import { Flame, Target, Clock, Share2, Lock, ArrowRight, Loader2, User, Sparkles, Shield, Search, Twitter, Instagram, Youtube, Mail, Menu, Download, Smartphone, Printer, AlertTriangle, CheckSquare, BarChart2, Users, Moon, Sun } from 'lucide-react';
+import { Flame, Target, Clock, Share2, Lock, ArrowRight, Loader2, User, Sparkles, Shield, Search, Twitter, Instagram, Youtube, Mail, Menu, Download, Smartphone, Printer, AlertTriangle, CheckSquare, BarChart2, BarChart3, Users, Moon, Sun } from 'lucide-react';
 import Modal from './components/Modal';
 import AdSenseBanner from './components/AdSenseBanner';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getSettings, getAnalytics, incrementVisits, incrementClicks, addFeedback, incrementRoasts, incrementProUnlocks } from './lib/store';
 import { jobList, jobCategories } from './lib/jobs';
 import { toJpeg } from 'html-to-image';
@@ -747,6 +748,15 @@ export default function App() {
     }
   };
 
+  const chartData = Object.entries(analytics.dailyViews || {}).map(([date, count]) => ({
+    date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    views: count as number
+  }));
+
+  if (chartData.length === 0) {
+    chartData.push({ date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), views: 0 });
+  }
+
   return (
     <div className={`min-h-screen bg-[#09090B] text-white font-sans selection:bg-[#39FF14] selection:text-black flex flex-col ${!isAdmin && settings.showAnnouncement && settings.announcementText ? 'pt-24 md:pt-28' : 'pt-16 md:pt-20'}`}>
       {/* Header */}
@@ -1439,45 +1449,76 @@ export default function App() {
       {!isAdmin && (
         <div className="w-full max-w-6xl mx-auto mt-12 px-6">
           <div className="bg-[#18181B] rounded-3xl p-6 md:p-8 border border-[#39FF14]/10 relative overflow-hidden">
+            <div className="flex items-center gap-3 mb-8 relative z-10 w-full">
+              <BarChart3 className="w-6 h-6 text-[#04D9FF]" />
+              <h2 className="text-xl font-display font-bold text-white">Live Analytics</h2>
+            </div>
+            
+            <div className="relative z-10 w-full mb-8">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-[#09090B] p-6 rounded-2xl border border-white/5">
+                  <p className="text-zinc-400 text-[10px] sm:text-xs uppercase tracking-wider mb-2">Total Earnings</p>
+                  <p className="text-2xl sm:text-4xl font-display font-bold text-[#39FF14]">₹{analytics.proUnlocks * 9}</p>
+                </div>
+                <div className="bg-[#09090B] p-6 rounded-2xl border border-white/5">
+                  <p className="text-zinc-400 text-[10px] sm:text-xs uppercase tracking-wider mb-2">Transactions</p>
+                  <p className="text-2xl sm:text-4xl font-display font-bold text-white">{analytics.proUnlocks}</p>
+                </div>
+                <div className="bg-[#09090B] p-6 rounded-2xl border border-white/5">
+                  <p className="text-zinc-400 text-[10px] sm:text-xs uppercase tracking-wider mb-2">Total Visits</p>
+                  <p className="text-2xl sm:text-4xl font-display font-bold text-white">{analytics.visits}</p>
+                </div>
+                <div className="bg-[#09090B] p-6 rounded-2xl border border-white/5">
+                  <p className="text-zinc-400 text-[10px] sm:text-xs uppercase tracking-wider mb-2">Total Roasts</p>
+                  <p className="text-2xl sm:text-4xl font-display font-bold text-[#04D9FF]">{analytics.roastsGenerated}</p>
+                </div>
+              </div>
+              
+              <div className="mt-4 p-4 bg-[#04D9FF]/10 border border-[#04D9FF]/20 rounded-xl">
+                <p className="text-sm text-[#04D9FF]">
+                  Conversion Rate: {analytics.visits > 0 ? ((analytics.proUnlocks / analytics.visits) * 100).toFixed(1) : 0}%
+                </p>
+              </div>
+            </div>
+
             <div className="relative z-10 w-full">
               {/* Chart Column */}
               <div className="w-full bg-[#09090B] rounded-2xl p-6 border border-white/5">
                 <h3 className="text-sm font-bold text-zinc-500 uppercase tracking-wider mb-6 flex items-center gap-2">
-                  <BarChart2 className="w-4 h-4" /> Activity Trend (Last 7 Days)
+                  <BarChart2 className="w-4 h-4" /> Daily Views
                 </h3>
-                <div className="h-[250px] w-full flex items-end justify-between gap-2 pt-8">
-                  {(Object.keys(analytics.dailyViews || {}).length > 0 
-                    ? Object.entries(analytics.dailyViews).map(([date, visits]) => ({ name: date.slice(5), visits })).slice(-7)
-                    : [
-                      { name: 'Day 1', visits: 120 }, { name: 'Day 2', visits: 150 }, { name: 'Day 3', visits: 180 },
-                      { name: 'Day 4', visits: 220 }, { name: 'Day 5', visits: 190 }, { name: 'Day 6', visits: 280 },
-                      { name: 'Today', visits: 310 + (analytics.visits || 0) }
-                    ]
-                  ).map((data, i, arr) => {
-                    const maxVisits = Math.max(...arr.map(d => d.visits), 400);
-                    const heightPercent = Math.max((data.visits / maxVisits) * 100, 10);
-                    
-                    return (
-                      <div key={data.name} className="flex flex-col items-center flex-1 h-full justify-end group">
-                        <div className="w-full relative flex items-end justify-center h-full">
-                          {/* Tooltip */}
-                          <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-[#18181B] border border-white/10 text-white text-xs py-1 px-2 rounded-lg whitespace-nowrap z-10 pointer-events-none">
-                            {data.visits.toLocaleString()} visits
-                          </div>
-                          {/* Bar */}
-                          <div 
-                            className="w-full max-w-[40px] bg-[#39FF14]/20 group-hover:bg-[#39FF14]/40 rounded-t-lg transition-all relative overflow-hidden"
-                            style={{ height: `${heightPercent}%` }}
-                          >
-                            <div className="absolute top-0 w-full h-1 bg-[#39FF14]"></div>
-                          </div>
-                        </div>
-                        <span className="text-[10px] sm:text-xs text-zinc-500 mt-3 font-medium whitespace-nowrap overflow-hidden text-ellipsis w-full text-center">
-                          {data.name}
-                        </span>
-                      </div>
-                    );
-                  })}
+                <div className="h-[200px] w-full min-w-0" style={{ minHeight: 200 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke="#a1a1aa" 
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis 
+                        stroke="#a1a1aa" 
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(value) => `${value}`}
+                      />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#18181B', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
+                        itemStyle={{ color: '#04D9FF' }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="views" 
+                        stroke="#04D9FF" 
+                        strokeWidth={3}
+                        dot={{ fill: '#04D9FF', strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6, fill: '#39FF14' }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
             </div>
