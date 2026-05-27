@@ -1,0 +1,80 @@
+{
+  "entities": {
+    "Settings": {
+      "title": "Application Settings",
+      "description": "Global settings managed by admin",
+      "type": "object",
+      "properties": {
+        "price": { "type": "number" },
+        "roastMode": { "type": "string" },
+        "razorpayLink": { "type": "string" },
+        "adSenseId": { "type": "string" },
+        "customAdImageUrl": { "type": "string" },
+        "customAdLink": { "type": "string" },
+        "adminEmail": { "type": "string" },
+        "instagramUrl": { "type": "string" },
+        "twitterUrl": { "type": "string" },
+        "youtubeUrl": { "type": "string" },
+        "showAnnouncement": { "type": "boolean" },
+        "announcementText": { "type": "string" },
+        "announcementUrl": { "type": "string" },
+        "showPopupNote": { "type": "boolean" },
+        "popupNoteTitle": { "type": "string" },
+        "popupNoteText": { "type": "string" },
+        "adminNotes": { "type": "string" },
+        "amazonAffiliateTag": { "type": "string" },
+        "geminiApiKey": { "type": "string" },
+        "customModules": { "type": "array" }
+      }
+    },
+    "Analytics": {
+      "title": "Global Analytics",
+      "description": "Overall visit and click metrics",
+      "type": "object",
+      "properties": {
+        "visits": { "type": "number" },
+        "clicks": { "type": "number" },
+        "roastsGenerated": { "type": "number" },
+        "proUnlocks": { "type": "number" }
+      }
+    },
+    "DailyAnalytics": {
+      "title": "Daily Analytics",
+      "description": "Daily visit metrics",
+      "type": "object",
+      "properties": {
+        "visits": { "type": "number" }
+      }
+    },
+    "Feedback": {
+      "title": "User Feedback",
+      "description": "Feedback submitted by users",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "date": { "type": "string" },
+        "user": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["text"]
+    }
+  },
+  "firestore": {
+    "config/settings": {
+      "schema": "Settings",
+      "description": "Global config options."
+    },
+    "config/analytics": {
+      "schema": "Analytics",
+      "description": "Aggregated analytics."
+    },
+    "daily_analytics/{date}": {
+      "schema": "DailyAnalytics",
+      "description": "Visits per day, isolated."
+    },
+    "feedback/{feedbackId}": {
+      "schema": "Feedback",
+      "description": "App feedback."
+    }
+  }
+}

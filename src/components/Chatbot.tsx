@@ -31,7 +31,7 @@ export default function Chatbot() {
     setLoading(true);
 
     try {
-      const settings = getSettings();
+      const settings = await getSettings();
       const apiKey = settings.geminiApiKey || process.env.GEMINI_API_KEY;
       const ai = new GoogleGenAI({ apiKey });
       const chat = ai.chats.create({

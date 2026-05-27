@@ -30,38 +30,45 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const settings = getSettings();
-    setPrice(settings.price);
-    setRoastMode(settings.roastMode);
-    setRazorpayLink(settings.razorpayLink || '');
-    setAdSenseId(settings.adSenseId || '');
-    setCustomAdImageUrl(settings.customAdImageUrl || '');
-    setCustomAdLink(settings.customAdLink || '');
-    setAdminEmail(settings.adminEmail || '');
-    setInstagramUrl(settings.instagramUrl || '');
-    setTwitterUrl(settings.twitterUrl || '');
-    setYoutubeUrl(settings.youtubeUrl || '');
-    setShowAnnouncement(settings.showAnnouncement || false);
-    setAnnouncementText(settings.announcementText || '');
-    setAnnouncementUrl(settings.announcementUrl || '');
-    setShowPopupNote(settings.showPopupNote || false);
-    setPopupNoteTitle(settings.popupNoteTitle || '');
-    setPopupNoteText(settings.popupNoteText || '');
-    setAdminNotes(settings.adminNotes || '');
-    setAmazonAffiliateTag(settings.amazonAffiliateTag || '');
-    setGeminiApiKey(settings.geminiApiKey || '');
-    setCustomModules(settings.customModules || []);
-    setAnalytics(getAnalytics());
-    setFeedbacks(getFeedbacks());
+    const loadSettings = async () => {
+      const settings = await getSettings();
+      setPrice(settings.price);
+      setRoastMode(settings.roastMode);
+      setRazorpayLink(settings.razorpayLink || '');
+      setAdSenseId(settings.adSenseId || '');
+      setCustomAdImageUrl(settings.customAdImageUrl || '');
+      setCustomAdLink(settings.customAdLink || '');
+      setAdminEmail(settings.adminEmail || '');
+      setInstagramUrl(settings.instagramUrl || '');
+      setTwitterUrl(settings.twitterUrl || '');
+      setYoutubeUrl(settings.youtubeUrl || '');
+      setShowAnnouncement(settings.showAnnouncement || false);
+      setAnnouncementText(settings.announcementText || '');
+      setAnnouncementUrl(settings.announcementUrl || '');
+      setShowPopupNote(settings.showPopupNote || false);
+      setPopupNoteTitle(settings.popupNoteTitle || '');
+      setPopupNoteText(settings.popupNoteText || '');
+      setAdminNotes(settings.adminNotes || '');
+      setAmazonAffiliateTag(settings.amazonAffiliateTag || '');
+      setGeminiApiKey(settings.geminiApiKey || '');
+      setCustomModules(settings.customModules || []);
+      
+      const analts = await getAnalytics();
+      setAnalytics(analts);
+      
+      const feeds = await getFeedbacks();
+      setFeedbacks(feeds);
+    };
+    loadSettings();
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (razorpayLink && !razorpayLink.includes('rzp.io') && !razorpayLink.includes('razorpay.com') && !razorpayLink.includes('razorpay.me')) {
       alert('Please enter a valid Razorpay link (usually contains rzp.io, razorpay.me, or razorpay.com). Do not enter your website link here.');
       return;
     }
 
-    saveSettings({ 
+    await saveSettings({ 
       price, 
       roastMode, 
       razorpayLink, 

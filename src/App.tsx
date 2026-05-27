@@ -4,7 +4,7 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { Flame, Target, Clock, Share2, Lock, ArrowRight, Loader2, User, Sparkles, Shield, Search, Twitter, Instagram, Youtube, Mail, Menu, Download, Smartphone, Printer, AlertTriangle, CheckSquare, BarChart2, Users, Moon, Sun } from 'lucide-react';
 import Modal from './components/Modal';
 import AdSenseBanner from './components/AdSenseBanner';
-import { getSettings, getAnalytics, incrementVisits, incrementClicks, addFeedback, incrementRoasts, incrementProUnlocks } from './lib/store';
+import { getSettings, subscribeSettings, subscribeAnalytics, incrementVisits, incrementClicks, addFeedback, incrementRoasts, incrementProUnlocks } from './lib/store';
 import { jobList, jobCategories } from './lib/jobs';
 import { toJpeg } from 'html-to-image';
 import { jsPDF } from 'jspdf';
@@ -198,14 +198,18 @@ export default function App() {
 
   useEffect(() => {
     incrementVisits();
-    const currentSettings = getSettings();
-    setSettings(currentSettings);
     
-    if (currentSettings.showPopupNote && currentSettings.popupNoteText && !isAdmin) {
-      setShowNotice(true);
-    }
-    
-    setAnalytics(getAnalytics());
+    const unsubscribeSettings = subscribeSettings((currentSettings) => {
+      setSettings(currentSettings);
+      if (currentSettings.showPopupNote && currentSettings.popupNoteText && !isAdmin) {
+        setShowNotice(true);
+      }
+    });
+
+    const unsubscribeAnalytics = subscribeAnalytics((currentAnalytics) => {
+      setAnalytics(currentAnalytics);
+    });
+
     const savedUser = localStorage.getItem('app_user');
     if (savedUser) {
       const parsed = JSON.parse(savedUser);
@@ -214,14 +218,21 @@ export default function App() {
     }
     
     // Inject AdSense
-    if (currentSettings.adSenseId && !document.querySelector('script[src*="pagead2.googlesyndication.com"]')) {
-      const script = document.createElement('script');
-      script.async = true;
-      script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${currentSettings.adSenseId}`;
-      script.crossOrigin = 'anonymous';
-      document.head.appendChild(script);
+    getSettings().then((setts) => {
+        if (setts.adSenseId && !document.querySelector('script[src*="pagead2.googlesyndication.com"]')) {
+          const script = document.createElement('script');
+          script.async = true;
+          script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${setts.adSenseId}`;
+          script.crossOrigin = 'anonymous';
+          document.head.appendChild(script);
+        }
+    });
+    
+    return () => {
+      unsubscribeSettings();
+      unsubscribeAnalytics();
     }
-  }, []);
+  }, [isAdmin]);
 
   const handleFeedbackSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -307,7 +318,8 @@ export default function App() {
         [Write a 2-line dark reality prediction about where they will be in 5 years if they don't change, using savage humor.]
         
         Additionally, you must provide:
-        - A clear, serious 7-day 'roadmap' (table of tasks) in Hinglish.
+        - A clear, serious 30-day 'roadmap' (table of tasks) in Hinglish. For each day, strictly provide exactly WHAT to do (kya karna hai), HOW to do it (kaise karna hai), and WHY to do it (kyu karna hai).
+        - For EVERY SINGLE DAY (Day 1 to 30), provide ONE highly relevant book recommendation ('book' field) related to their goal.
         - One 'proTip' in Hinglish.
         - A 'shareText' for WhatsApp.`,
         {
@@ -325,11 +337,12 @@ export default function App() {
                   type: Type.OBJECT,
                   properties: {
                     day: { type: Type.INTEGER },
-                    task: { type: Type.STRING, description: 'A serious, actionable task for the day.' },
+                    task: { type: Type.STRING, description: 'A serious, actionable task describing WHAT, HOW, and WHY.' },
+                    book: { type: Type.STRING, description: 'Must be a relevant book name for this day.' },
                   },
-                  required: ['day', 'task'],
+                  required: ['day', 'task', 'book'],
                 },
-                description: 'The 7-day roadmap.',
+                description: 'The 30-day roadmap.',
               },
               proTip: {
                 type: Type.STRING,
@@ -399,7 +412,7 @@ export default function App() {
         ### 🔮 FUTURE REALITY
         [Write the dark 5-year prediction...]
         
-        2. proRoadmap: Generate a highly detailed 30-day Pro roadmap with tasks in Hinglish. Each task should be long and descriptive, breaking down exactly WHAT to do and HOW to do it.
+        2. proRoadmap: Generate a highly detailed 30-day Pro roadmap with tasks in Hinglish. Each task should be long and descriptive, strictly detailing WHAT to do (kya karna hai), HOW to do it (kaise karna hai), and WHY to do it (kyu karna hai).
            - Phase 1: Foundation (Day 1-10) - Mindset shifts, Power habits, and Groundwork.
            - Phase 2: Action (Day 11-20) - Detailed step-by-step strategy, Skill acquisition, and Networking.
            - Phase 3: Mastery (Day 21-30) - Scaling tips, Portfolio building, and Elite performance execution.
@@ -903,6 +916,57 @@ export default function App() {
           )}
         </motion.div>
 
+        {/* How It Works Section */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-[#18181B] border border-[#04D9FF]/20 shadow-[0_0_30px_rgba(4,217,255,0.05)] rounded-3xl p-6 md:p-8 mb-12 text-left relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#04D9FF]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+          
+          <div className="flex items-center gap-3 mb-6 relative z-10">
+            <div className="p-2 bg-[#04D9FF]/10 rounded-xl text-[#04D9FF]">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <h2 className="text-2xl font-display font-bold text-white">How This Works (And Why You Need It)</h2>
+          </div>
+          
+          <div className="space-y-6 text-zinc-300 text-sm md:text-base leading-relaxed relative z-10">
+            <p>
+              <strong className="text-white block mb-1">Kya Karti Hai Yeh App?</strong> 
+              Career Reality Check ek AI-powered tool hai jo aapke current habits aur aalsi routine ko analyze karke aapko reality check dilaata hai. Pehle aapko ek savage <span className="text-[#39FF14] font-bold">"roast"</span> milta hai (jo aapki aukaat batayega), uske baad ek serious, actionable <span className="text-yellow-400 font-bold">"7-Day Roadmap"</span> milta hai jisme hum aapko 3 best books bhi batate hain jo aapke growth mein help karengi.
+            </p>
+            <p>
+              <strong className="text-white block mb-1">Kyu Banayi Gayi Hai?</strong> 
+              Kyunki sapne toh sab bade dekhte hain, par unhe paane ke liye mehnat nahi karte. Roz reels scroll karna ya kal se shuru karunga bolna—yahi aapki problem hai. Yeh app brutally honest feedback dekar aapse actual action karwati hai.
+            </p>
+            
+            <div className="pt-6 mt-6 border-t border-white/10">
+              <h3 className="text-lg font-display font-bold text-white mb-5 uppercase tracking-wider text-sm flex items-center gap-2">
+                <Target className="w-4 h-4 text-[#FF10F0]" /> Step-by-Step Guide
+              </h3>
+              <ul className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <li className="bg-[#09090B] p-4 rounded-2xl border border-white/5">
+                  <span className="flex w-8 h-8 rounded-full bg-[#04D9FF]/10 text-[#04D9FF] items-center justify-center font-bold text-sm mb-3">1</span>
+                  <strong className="text-white block mb-1">Dream Job Bharo</strong>
+                  <span className="text-xs text-zinc-400">Niche form mein apna final goal likho (e.g., Software Engineer, IAS, YouTuber).</span>
+                </li>
+                <li className="bg-[#09090B] p-4 rounded-2xl border border-white/5">
+                  <span className="flex w-8 h-8 rounded-full bg-[#39FF14]/10 text-[#39FF14] items-center justify-center font-bold text-sm mb-3">2</span>
+                  <strong className="text-white block mb-1">Current Reality</strong>
+                  <span className="text-xs text-zinc-400">Kitne ghante phone pe waste karte ho, honestly daalo. Humara AI sab janta hai.</span>
+                </li>
+                <li className="bg-[#09090B] p-4 rounded-2xl border border-white/5">
+                  <span className="flex w-8 h-8 rounded-full bg-[#FF10F0]/10 text-[#FF10F0] items-center justify-center font-bold text-sm mb-3">3</span>
+                  <strong className="text-white block mb-1">Get Roasted</strong>
+                  <span className="text-xs text-zinc-400">Button dabao aur sach sunne ke liye taiyaar raho. Uske baad apne roadmap ko follow karo!</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </motion.div>
+
         <AnimatePresence mode="wait">
           {!result ? (
             <motion.form 
@@ -1088,7 +1152,7 @@ export default function App() {
                   <div className="p-2 bg-[#39FF14]/20 rounded-lg text-[#39FF14]">
                     <Target className="w-6 h-6" />
                   </div>
-                  <h2 className="text-2xl font-display font-bold text-white">7-Day Basic Roadmap</h2>
+                  <h2 className="text-2xl font-display font-bold text-white">30-Day Basic Roadmap</h2>
                 </div>
                 
                 <div className="space-y-4">
@@ -1097,8 +1161,16 @@ export default function App() {
                       <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[#18181B] border border-white/10 flex items-center justify-center font-display font-bold text-[#39FF14] group-hover:scale-110 transition-transform">
                         D{day.day}
                       </div>
-                      <div className="flex items-center">
-                        <p className="text-zinc-300">{day.task}</p>
+                      <div className="flex flex-col justify-center w-full">
+                        <p className="text-zinc-300 text-sm md:text-base mb-3">{day.task}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {day.book && (
+                            <div className="flex items-center gap-1 text-[10px] md:text-xs text-[#39FF14]/80 bg-[#39FF14]/10 px-2 py-1 rounded-md">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                              Book: <a href={`https://www.amazon.in/s?k=${encodeURIComponent(day.book)}${settings.amazonAffiliateTag ? `&tag=${settings.amazonAffiliateTag}` : ''}`} target="_blank" rel="noopener noreferrer" className="hover:text-[#39FF14] hover:underline font-bold ml-1">{day.book}</a>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1288,7 +1360,7 @@ export default function App() {
                           {day.book && (
                             <div className="flex items-center gap-1 text-[10px] md:text-xs text-yellow-400/80 bg-yellow-400/10 px-2 py-1 rounded-md">
                               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-                              Book: {day.book}
+                              Book: <a href={`https://www.amazon.in/s?k=${encodeURIComponent(day.book)}${settings.amazonAffiliateTag ? `&tag=${settings.amazonAffiliateTag}` : ''}`} target="_blank" rel="noopener noreferrer" className="hover:text-yellow-400 hover:underline font-bold ml-1">{day.book}</a>
                             </div>
                           )}
                         </div>
@@ -1451,18 +1523,18 @@ export default function App() {
                     : [
                       { name: 'Day 1', visits: 120 }, { name: 'Day 2', visits: 150 }, { name: 'Day 3', visits: 180 },
                       { name: 'Day 4', visits: 220 }, { name: 'Day 5', visits: 190 }, { name: 'Day 6', visits: 280 },
-                      { name: 'Today', visits: 310 + (analytics.visits || 0) }
+                      { name: 'Today', visits: 310 + ((analytics.visits as number) || 0) }
                     ]
                   ).map((data, i, arr) => {
-                    const maxVisits = Math.max(...arr.map(d => d.visits), 400);
-                    const heightPercent = Math.max((data.visits / maxVisits) * 100, 10);
+                    const maxVisits = Math.max(...arr.map(d => d.visits as number), 400);
+                    const heightPercent = Math.max(((data.visits as number) / maxVisits) * 100, 10);
                     
                     return (
                       <div key={data.name} className="flex flex-col items-center flex-1 h-full justify-end group">
                         <div className="w-full relative flex items-end justify-center h-full">
                           {/* Tooltip */}
                           <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-[#18181B] border border-white/10 text-white text-xs py-1 px-2 rounded-lg whitespace-nowrap z-10 pointer-events-none">
-                            {data.visits.toLocaleString()} visits
+                            {Number(data.visits).toLocaleString()} visits
                           </div>
                           {/* Bar */}
                           <div 
@@ -2007,7 +2079,7 @@ export default function App() {
             <div className="space-y-6">
               <div>
                 <h4 className="font-bold text-white mb-1">How does this work?</h4>
-                <p className="text-zinc-400">We use Google's Gemini AI to analyze your inputs and generate a custom roast and an actionable 7-day roadmap.</p>
+                <p className="text-zinc-400">We use Google's Gemini AI to analyze your inputs and generate a custom roast along with an actionable 7-day roadmap and 3 best recommended books for your goal.</p>
               </div>
               <div>
                 <h4 className="font-bold text-white mb-1">Is my data saved?</h4>
